@@ -1,0 +1,31 @@
+id: "EYE-RULE-AUTH-001"
+name: "SSH Brute Force Attack"
+version: "1.0"
+description: "Detects multiple failed SSH authentication attempts from the same source IP in a short time frame."
+severity: "high"
+confidence: 0.92
+enabled: true
+
+metadata:
+  category: "authentication"
+  tags: ["ssh", "brute-force", "credential-access"]
+  mitre_attack:
+    tactic: "TA0001 - Initial Access"
+    technique: "T1110.001 - Password Guessing"
+  false_positives:
+    - "Legitimate users mistyping passwords multiple times"
+    - "Internal vulnerability scanner executing authorized audit"
+
+detection:
+  condition:
+    source: "linux-auth"
+    event_type: "auth_failure"
+  threshold:
+    count: 5
+    timeframe_seconds: 120
+    group_by: ["source_ip", "host"]
+
+response_recommendations:
+  - "Block source IP at the edge firewall."
+  - "Verify if any subsequent login attempt from this IP succeeded."
+  - "Check target host for root login configurations and disable SSH password authentication."

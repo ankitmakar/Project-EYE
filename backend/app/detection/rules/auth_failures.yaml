@@ -1,0 +1,23 @@
+id: "EYE-RULE-AUTH-002"
+name: "Single Authentication Failure Anomaly"
+version: "1.0"
+description: "Detects individual failed authentication events on critical servers."
+severity: "low"
+confidence: 0.70
+enabled: true
+
+metadata:
+  category: "authentication"
+  tags: ["auth", "failed-login"]
+  mitre_attack:
+    tactic: "TA0001 - Initial Access"
+    technique: "T1078 - Valid Accounts"
+  false_positives:
+    - "User typo"
+
+detection:
+  condition:
+    event_type: "auth_failure"
+
+response_recommendations:
+  - "Monitor host for repeated authentication failures."

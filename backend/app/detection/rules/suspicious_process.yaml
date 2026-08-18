@@ -1,0 +1,25 @@
+id: "EYE-RULE-EP-002"
+name: "Suspicious Reverse Shell / Process Spawn"
+version: "1.0"
+description: "Detects execution of known reverse shell payloads, netcat listeners, or suspicious downloaders."
+severity: "critical"
+confidence: 0.95
+enabled: true
+
+metadata:
+  category: "endpoint"
+  tags: ["reverse-shell", "execution", "c2"]
+  mitre_attack:
+    tactic: "TA0002 - Execution"
+    technique: "T1059.004 - Unix Shell"
+  false_positives:
+    - "Authorized red team exercise"
+
+detection:
+  condition:
+    event_type: "suspicious_process"
+
+response_recommendations:
+  - "Isolate host from the network immediately."
+  - "Kill the offending process tree."
+  - "Capture memory dump for forensic analysis."

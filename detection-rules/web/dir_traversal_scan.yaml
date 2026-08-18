@@ -1,0 +1,24 @@
+id: "EYE-RULE-WEB-003"
+name: "Directory Traversal / LFI Attempt"
+version: "1.0"
+description: "Detects path traversal sequences (../..) attempting to read sensitive files like /etc/passwd or win.ini."
+severity: "high"
+confidence: 0.93
+enabled: true
+
+metadata:
+  category: "web"
+  tags: ["lfi", "path-traversal", "initial-access"]
+  mitre_attack:
+    tactic: "TA0001 - Initial Access"
+    technique: "T1190 - Exploit Public-Facing Application"
+  false_positives:
+    - "Security scan"
+
+detection:
+  condition:
+    event_type: "path_traversal_attempt"
+
+response_recommendations:
+  - "Inspect web server logs to ensure HTTP response returned 404 or 403."
+  - "Verify application file retrieval functions use strict path canonicalization and whitelist validation."

@@ -1,0 +1,25 @@
+id: "EYE-RULE-EP-001"
+name: "Sudo Root Privilege Escalation"
+version: "1.0"
+description: "Detects user attempting unauthorized or high-risk sudo commands escalating to root."
+severity: "high"
+confidence: 0.90
+enabled: true
+
+metadata:
+  category: "endpoint"
+  tags: ["privilege-escalation", "sudo", "root"]
+  mitre_attack:
+    tactic: "TA0004 - Privilege Escalation"
+    technique: "T1548.003 - Sudo and Sudo Caching"
+  false_positives:
+    - "Legitimate system administrator performing maintenance"
+
+detection:
+  condition:
+    event_type: "privilege_escalation"
+
+response_recommendations:
+  - "Verify if user had approved change request for root access."
+  - "Inspect shell history on target host for post-escalation actions."
+  - "Revoke sudo permissions if unapproved."

@@ -1,0 +1,25 @@
+id: "EYE-RULE-EP-003"
+name: "Ransomware File Extension Renaming Detected"
+version: "1.0"
+description: "Detects bulk file modification or creation of known ransomware extensions (.locked, .crypto, .enc, .wnry)."
+severity: "critical"
+confidence: 0.98
+enabled: true
+
+metadata:
+  category: "endpoint"
+  tags: ["ransomware", "impact", "file-encryption"]
+  mitre_attack:
+    tactic: "TA0040 - Impact"
+    technique: "T1486 - Data Encrypted for Impact"
+  false_positives:
+    - "Legitimate backup archiving software"
+
+detection:
+  condition:
+    event_type: "file_encryption_activity"
+
+response_recommendations:
+  - "TRIGGER EMERGENCY CONTAINMENT: Isolate host and disable all network interfaces."
+  - "Kill active process ID responsible for file operations."
+  - "Preserve shadow copies and trigger offline backup restoration procedures."

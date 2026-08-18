@@ -1,0 +1,29 @@
+id: "EYE-RULE-AUTH-003"
+name: "Multiple Failed Logins Across Accounts"
+version: "1.0"
+description: "Detects password spraying attempt where multiple distinct usernames are attempted from a single source IP."
+severity: "high"
+confidence: 0.90
+enabled: true
+
+metadata:
+  category: "authentication"
+  tags: ["password-spray", "auth", "credential-access"]
+  mitre_attack:
+    tactic: "TA0006 - Credential Access"
+    technique: "T1110.003 - Password Spraying"
+  false_positives:
+    - "Misconfigured SSO service"
+
+detection:
+  condition:
+    event_type: "auth_failure"
+  threshold:
+    count: 6
+    timeframe_seconds: 180
+    group_by: ["source_ip"]
+
+response_recommendations:
+  - "Inspect target accounts for active lockout status."
+  - "Block source IP on external perimeter."
+  - "Review Active Directory / PAM audit logs for breached credentials."

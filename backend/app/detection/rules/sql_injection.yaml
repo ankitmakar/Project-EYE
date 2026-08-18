@@ -1,0 +1,25 @@
+id: "EYE-RULE-WEB-001"
+name: "SQL Injection (SQLi) Attempt"
+version: "1.0"
+description: "Detects SQL syntax injection patterns in web application requests."
+severity: "high"
+confidence: 0.94
+enabled: true
+
+metadata:
+  category: "web"
+  tags: ["sqli", "web-attack", "initial-access"]
+  mitre_attack:
+    tactic: "TA0001 - Initial Access"
+    technique: "T1190 - Exploit Public-Facing Application"
+  false_positives:
+    - "Security testing or automated WAF benchmark"
+
+detection:
+  condition:
+    event_type: "sql_injection_attempt"
+
+response_recommendations:
+  - "Inspect backend database queries for SQL parameterization."
+  - "Check HTTP response code to confirm if attack succeeded (500/200 vs 403)."
+  - "Deploy WAF rule targeting attacker IP."

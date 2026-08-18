@@ -1,0 +1,26 @@
+id: "EYE-RULE-NET-002"
+name: "High-Entropy DNS Tunneling Suspicion"
+version: "1.0"
+description: "Detects anomalous, high-entropy subdomain requests indicative of DNS exfiltration or C2 tunneling."
+severity: "high"
+confidence: 0.89
+enabled: true
+
+metadata:
+  category: "network"
+  tags: ["dns-tunneling", "c2", "exfiltration"]
+  mitre_attack:
+    tactic: "TA0011 - Command and Control"
+    technique: "T1071.004 - DNS Protocol"
+  false_positives:
+    - "CDN domain resolution"
+    - "Security antivirus query lookups"
+
+detection:
+  condition:
+    event_type: "dns_tunneling_activity"
+
+response_recommendations:
+  - "Inspect authoritative nameserver for queried domains."
+  - "Sinkhole suspect domain at internal DNS resolver."
+  - "Isolate client host attempting DNS tunneling."

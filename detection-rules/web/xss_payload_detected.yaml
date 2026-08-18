@@ -1,0 +1,24 @@
+id: "EYE-RULE-WEB-002"
+name: "Cross-Site Scripting (XSS) Payload Detected"
+version: "1.0"
+description: "Detects injected JavaScript tags and XSS payloads in HTTP request parameters."
+severity: "medium"
+confidence: 0.88
+enabled: true
+
+metadata:
+  category: "web"
+  tags: ["xss", "web-attack", "client-side"]
+  mitre_attack:
+    tactic: "TA0001 - Initial Access"
+    technique: "T1190 - Exploit Public-Facing Application"
+  false_positives:
+    - "Developers submitting sample code through CMS form"
+
+detection:
+  condition:
+    event_type: "xss_attempt"
+
+response_recommendations:
+  - "Verify output encoding and CSP headers on web endpoint."
+  - "Check if payload was reflected in HTTP response."
