@@ -1,10 +1,12 @@
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.core.config import settings
+from app.core.exceptions import EyeException
 from app.core.logging import logger, setup_logging
 from app.core.middleware import RequestContextMiddleware, SecurityHeadersMiddleware
 from app.db.session import init_db
@@ -50,6 +52,35 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Global Fail-Secure Exception Handlers
+@app.exception_handler(EyeException)
+async def eye_exception_handler(request: Request, exc: EyeException):
+    request_id = getattr(request.state, "request_id", "N/A")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "detail": exc.detail,
+            "error_code": exc.error_code,
+            "request_id": request_id
+        }
+    )
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    request_id = getattr(request.state, "request_id", "N/A")
+    logger.error(
+        f"Unhandled exception on {request.method} {request.url.path} [request_id={request_id}]: {exc}",
+        exc_info=True
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "An internal server error occurred. Please contact SOC administration.",
+            "error_code": "INTERNAL_SERVER_ERROR",
+            "request_id": request_id
+        }
+    )
 
 # Mount API Routers
 app.include_router(api_router, prefix=settings.API_V1_STR)

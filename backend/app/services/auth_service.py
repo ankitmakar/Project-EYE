@@ -11,7 +11,7 @@ from app.schemas.user import UserCreate, UserRead
 
 class AuthService:
     @staticmethod
-    async def authenticate_user(db: AsyncSession, login_data: LoginRequest) -> Token:
+    async def authenticate_user(db: AsyncSession, login_data: LoginRequest, client_ip: str = "unknown") -> Token:
         query = select(User).where(
             (User.email == login_data.username) | (User.username == login_data.username)
         )
@@ -19,9 +19,33 @@ class AuthService:
         user = result.scalar_one_or_none()
 
         if not user or not verify_password(login_data.password, user.hashed_password):
+            from app.services.audit_service import AuditService
+            await AuditService.log_action(
+                db=db,
+                user_id="unknown",
+                username=login_data.username,
+                ip_address=client_ip,
+                action="USER_LOGIN_FAILED",
+                resource_type="auth",
+                resource_id="auth",
+                status="denied",
+                details={"reason": "Invalid credentials", "attempted_identifier": login_data.username}
+            )
             raise AuthenticationFailedException("Invalid email/username or password.")
 
         if not user.is_active:
+            from app.services.audit_service import AuditService
+            await AuditService.log_action(
+                db=db,
+                user_id=user.id,
+                username=user.username,
+                ip_address=client_ip,
+                action="USER_LOGIN_FAILED",
+                resource_type="auth",
+                resource_id=user.id,
+                status="denied",
+                details={"reason": "Account inactive"}
+            )
             raise PermissionDeniedException("User account is inactive. Please contact administrator.")
 
         # Update last login timestamp

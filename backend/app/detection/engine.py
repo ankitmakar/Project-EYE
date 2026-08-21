@@ -9,10 +9,13 @@ from app.schemas.alert import AlertCreate
 from app.schemas.event import EventCreate
 
 class DetectionEngine:
-    def __init__(self):
+    def __init__(self, dedup_window_seconds: int = 60):
         # Sliding time-window storage: key -> deque of timestamps
         # key format: "rule_id:group_by_value"
         self._sliding_windows: Dict[str, deque] = defaultdict(deque)
+        # Alert deduplication cache: fingerprint -> last_alert_timestamp
+        self._alert_dedup_cache: Dict[str, float] = {}
+        self.dedup_window_seconds = dedup_window_seconds
 
     def evaluate_event(self, event: EventCreate, active_rules: Optional[List[RuleDefinition]] = None) -> List[AlertCreate]:
         if active_rules is None:
@@ -60,8 +63,16 @@ class DetectionEngine:
                     # Threshold not yet reached
                     continue
 
-                # Threshold reached! Reset or prune to avoid duplicate alert flood
+                # Threshold reached! Reset to avoid duplicate alert flood
                 timestamps.clear()
+            else:
+                # Deduplication check for single-event rules (Rule 37)
+                fingerprint = f"{rule.rule_id}:{event.host}:{event.source_ip or ''}:{event.username or ''}"
+                last_seen = self._alert_dedup_cache.get(fingerprint)
+                if last_seen and (now_ts - last_seen) < self.dedup_window_seconds:
+                    logger.debug(f"Deduplicating alert for rule '{rule.rule_id}' on host '{event.host}' (within {self.dedup_window_seconds}s window)")
+                    continue
+                self._alert_dedup_cache[fingerprint] = now_ts
 
             # 3. Construct Alert
             alert_id = f"ALT-{uuid.uuid4().hex[:8].upper()}"

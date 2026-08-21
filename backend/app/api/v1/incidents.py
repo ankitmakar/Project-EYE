@@ -73,7 +73,7 @@ async def get_incident_detail(
 async def create_incident(
     inc_in: IncidentCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles(["admin", "soc_analyst"]))
+    current_user: User = Depends(require_roles(["admin", "senior_analyst", "soc_analyst"]))
 ):
     incident = await IncidentService.create_incident(db, inc_in)
     await AuditService.log_action(
@@ -92,7 +92,7 @@ async def update_incident(
     incident_id: str,
     update_data: IncidentUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles(["admin", "soc_analyst"]))
+    current_user: User = Depends(require_roles(["admin", "senior_analyst", "soc_analyst"]))
 ):
     incident = await IncidentService.update_incident(db, incident_id, update_data)
     await AuditService.log_action(
@@ -111,7 +111,7 @@ async def add_incident_note(
     incident_id: str,
     note_data: AddIncidentNoteRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles(["admin", "soc_analyst"]))
+    current_user: User = Depends(require_roles(["admin", "senior_analyst", "soc_analyst"]))
 ):
     incident = await IncidentService.add_note(db, incident_id, current_user.username, note_data)
     await AuditService.log_action(

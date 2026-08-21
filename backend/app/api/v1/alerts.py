@@ -50,7 +50,7 @@ async def update_alert_status(
     alert_id: str,
     update_data: AlertUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles(["admin", "soc_analyst"]))
+    current_user: User = Depends(require_roles(["admin", "senior_analyst", "soc_analyst"]))
 ):
     alert = await AlertService.update_alert(db, alert_id, update_data)
     await AuditService.log_action(
@@ -69,7 +69,7 @@ async def escalate_alert(
     alert_id: str,
     req: EscalateAlertRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles(["admin", "soc_analyst"]))
+    current_user: User = Depends(require_roles(["admin", "senior_analyst", "soc_analyst"]))
 ):
     incident = await AlertService.escalate_to_incident(db, alert_id, req)
     await AuditService.log_action(

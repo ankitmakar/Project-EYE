@@ -25,6 +25,14 @@ Username: {username}
 Analyze the alert and respond with a JSON object adhering to this schema:
 {{
   "summary": "Concise 2-3 sentence executive summary of the detected activity",
+  "observed_evidence": [
+    "Fact 1: Explicit observation directly extracted from telemetry",
+    "Fact 2: Additional concrete verifiable data point"
+  ],
+  "ai_inferences": [
+    "Inference 1: Analytical conclusion or probability based on observed evidence",
+    "Inference 2: Assessment of risk"
+  ],
   "root_cause": "Technical root cause explanation of how the activity occurred",
   "mitre_mapping": ["TA000X - Tactic Name", "T1XXX.XXX - Technique Name"],
   "threat_hypothesis": "Analytical hypothesis of adversary identity, motivation, or next phase in the kill-chain",
@@ -50,6 +58,12 @@ Severity: {severity}
 Analyze the entire incident attack timeline and respond with a JSON object adhering to this schema:
 {{
   "summary": "Comprehensive overview of the attack campaign and progression",
+  "observed_evidence": [
+    "Observed event sequence and targeted assets from logs"
+  ],
+  "ai_inferences": [
+    "Analytical assessment of adversary campaign progression and intent"
+  ],
   "root_cause": "Primary initial compromise vector and privilege escalation pathway",
   "mitre_mapping": ["TA000X - Tactic Name", "T1XXX.XXX - Technique Name"],
   "threat_hypothesis": "Assessment of adversary campaign scope and lateral movement risks",

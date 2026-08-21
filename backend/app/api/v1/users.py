@@ -14,7 +14,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 @router.get("", response_model=List[UserRead])
 async def list_users(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles(["admin", "soc_analyst"]))
+    current_user: User = Depends(require_roles(["admin", "senior_analyst", "soc_analyst"]))
 ):
     result = await db.execute(select(User))
     return list(result.scalars().all())

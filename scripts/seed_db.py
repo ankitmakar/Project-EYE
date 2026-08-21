@@ -43,6 +43,14 @@ async def seed():
                 hashed_password=get_password_hash("EyeAdmin2026!Secure")
             ),
             User(
+                email="senior@eye.security",
+                username="senior_analyst",
+                full_name="Elena Rostova (Senior SOC Analyst)",
+                role="senior_analyst",
+                is_active=True,
+                hashed_password=get_password_hash("EyeSenior2026!Secure")
+            ),
+            User(
                 email="analyst@eye.security",
                 username="analyst",
                 full_name="Alex Rivera (Lead SOC Analyst)",
@@ -64,7 +72,7 @@ async def seed():
         await db.flush()
 
         admin_user = users[0]
-        analyst_user = users[1]
+        analyst_user = users[2]
 
         # 2. Seed Detection Rules
         print("[*] Seeding Detection Rules...")

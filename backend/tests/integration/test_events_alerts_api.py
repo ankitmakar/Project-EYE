@@ -35,4 +35,45 @@ async def test_event_ingestion_and_alert_generation(client, test_db):
     assert alerts_resp.status_code == 200
     alerts_data = alerts_resp.json()
     assert alerts_data["total"] >= 1
+    alert_item = alerts_data["items"][0]
+    alert_id = alert_item["alert_id"]
     assert any(a["rule_name"] == "SQL Injection (SQLi) Attempt" for a in alerts_data["items"])
+
+    # 3. Test AI Alert Analysis (Rule 40 & 45)
+    ai_resp = await client.post("/api/v1/ai/analyze-alert", headers=headers, json={
+        "alert_id": alert_id
+    })
+    assert ai_resp.status_code == 200
+    ai_analysis = ai_resp.json()
+    assert "summary" in ai_analysis
+    assert "observed_evidence" in ai_analysis
+    assert "ai_inferences" in ai_analysis
+    assert "root_cause" in ai_analysis
+    assert "mitre_mapping" in ai_analysis
+    assert "confidence" in ai_analysis
+
+    # 4. Escalate Alert to Incident
+    esc_resp = await client.post(f"/api/v1/alerts/{alert_id}/escalate", headers=headers, json={
+        "title": "SQL Injection Incident Escalation",
+        "severity": "high",
+        "analyst_notes": "Triage verified malicious SQLi payload in web access logs."
+    })
+    assert esc_resp.status_code == 200
+    inc_data = esc_resp.json()
+    incident_id = inc_data["incident_id"]
+    assert incident_id.startswith("INC-")
+
+    # 5. Update Incident Status
+    patch_resp = await client.patch(f"/api/v1/incidents/{incident_id}", headers=headers, json={
+        "status": "investigating",
+        "analyst_notes": "Added investigation notes."
+    })
+    assert patch_resp.status_code == 200
+    assert patch_resp.json()["status"] == "investigating"
+
+    # 6. Query SOC Summary Report
+    rep_resp = await client.get("/api/v1/reports/summary", headers=headers)
+    assert rep_resp.status_code == 200
+    rep_data = rep_resp.json()
+    assert "executive_metrics" in rep_data
+    assert rep_data["executive_metrics"]["total_alerts_generated"] >= 1

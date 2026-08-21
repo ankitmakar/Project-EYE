@@ -1,3 +1,6 @@
+import ipaddress
+import socket
+from urllib.parse import urlparse
 import bcrypt
 from datetime import datetime, timedelta, timezone
 from enum import Enum
@@ -7,8 +10,10 @@ from app.core.config import settings
 
 class UserRole(str, Enum):
     ADMIN = "admin"
+    SENIOR_ANALYST = "senior_analyst"
     SOC_ANALYST = "soc_analyst"
     VIEWER = "viewer"
+    SERVICE_ACCOUNT = "service_account"
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
@@ -59,3 +64,61 @@ def decode_token(token: str) -> Dict[str, Any]:
         return payload
     except JWTError:
         return {}
+
+class SSRFGuard:
+    """
+    Validates external URLs to prevent Server-Side Request Forgery (SSRF)
+    attacks against internal infrastructure, loopback addresses, and cloud metadata endpoints.
+    """
+    BLOCKED_HOSTNAMES = {
+        "localhost", "127.0.0.1", "0.0.0.0", "::1", "metadata.google.internal", "instance-data"
+    }
+
+    @classmethod
+    def is_safe_url(cls, url: str) -> bool:
+        if not url:
+            return False
+
+        try:
+            parsed = urlparse(url)
+            if parsed.scheme not in ("http", "https"):
+                return False
+
+            hostname = parsed.hostname
+            if not hostname:
+                return False
+
+            hostname_lower = hostname.lower().strip()
+            if hostname_lower in cls.BLOCKED_HOSTNAMES:
+                return False
+
+            # Check direct IP addresses
+            try:
+                ip = ipaddress.ip_address(hostname_lower)
+                if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved:
+                    return False
+                # Cloud metadata IP (169.254.169.254) is link-local, but explicit check for safety
+                if str(ip) == "169.254.169.254":
+                    return False
+                return True
+            except ValueError:
+                # Hostname is a domain name, resolve DNS to verify target IPs
+                pass
+
+            try:
+                addr_info = socket.getaddrinfo(hostname_lower, None)
+                for item in addr_info:
+                    sockaddr = item[4]
+                    ip_str = sockaddr[0]
+                    ip = ipaddress.ip_address(ip_str)
+                    if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved:
+                        return False
+                    if str(ip) == "169.254.169.254":
+                        return False
+            except socket.gaierror:
+                return False
+
+            return True
+        except Exception:
+            return False
+

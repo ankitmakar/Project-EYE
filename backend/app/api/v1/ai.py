@@ -16,7 +16,7 @@ router = APIRouter(prefix="/ai", tags=["AI Investigation Co-Pilot"])
 async def analyze_alert_with_ai(
     req: AIAnalyzeAlertRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles(["admin", "soc_analyst"]))
+    current_user: User = Depends(require_roles(["admin", "senior_analyst", "soc_analyst"]))
 ):
     return await AIService.analyze_alert(
         db=db,
@@ -29,7 +29,7 @@ async def analyze_alert_with_ai(
 async def investigate_incident_with_ai(
     req: AIInvestigateIncidentRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles(["admin", "soc_analyst"]))
+    current_user: User = Depends(require_roles(["admin", "senior_analyst", "soc_analyst"]))
 ):
     return await AIService.investigate_incident(
         db=db,

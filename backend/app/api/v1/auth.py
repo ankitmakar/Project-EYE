@@ -17,7 +17,7 @@ async def login(
     db: AsyncSession = Depends(get_db)
 ):
     client_ip = request.client.host if request.client else "unknown"
-    token = await AuthService.authenticate_user(db, req)
+    token = await AuthService.authenticate_user(db, req, client_ip=client_ip)
     
     await AuditService.log_action(
         db=db,

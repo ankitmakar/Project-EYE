@@ -32,3 +32,16 @@ async def test_auth_login_and_me(client, test_db):
     assert me_resp.status_code == 200
     assert me_resp.json()["username"] == "analyst_test"
     assert me_resp.json()["role"] == "soc_analyst"
+
+    # 3. Test Failed Login & Audit Recording
+    failed_resp = await client.post("/api/v1/auth/login", json={
+        "username": "analyst_test",
+        "password": "WrongPassword999!"
+    })
+    assert failed_resp.status_code == 401
+    assert failed_resp.json()["error_code"] == "AUTH_FAILED"
+
+    # 4. Test Logout
+    logout_resp = await client.post("/api/v1/auth/logout", headers=headers)
+    assert logout_resp.status_code == 200
+    assert logout_resp.json()["status"] == "logged_out"

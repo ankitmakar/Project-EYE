@@ -35,7 +35,7 @@ async def get_detection_rule(
 async def create_detection_rule(
     rule_in: DetectionRuleCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles(["admin"]))
+    current_user: User = Depends(require_roles(["admin", "senior_analyst"]))
 ):
     rule = await DetectionService.create_rule(db, rule_in)
     await AuditService.log_action(
@@ -53,7 +53,7 @@ async def create_detection_rule(
 async def toggle_detection_rule(
     rule_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_roles(["admin"]))
+    current_user: User = Depends(require_roles(["admin", "senior_analyst"]))
 ):
     rule = await DetectionService.toggle_rule(db, rule_id)
     await AuditService.log_action(
@@ -70,6 +70,6 @@ async def toggle_detection_rule(
 @router.post("/test", response_model=Dict[str, Any])
 async def test_detection_rule(
     req: RuleTestRequest,
-    current_user: User = Depends(require_roles(["admin", "soc_analyst"]))
+    current_user: User = Depends(require_roles(["admin", "senior_analyst", "soc_analyst"]))
 ):
     return DetectionService.test_rule(req)

@@ -63,6 +63,8 @@ class AIInvestigationClient:
 
         return AIAnalysisResponse(
             summary=safe_dict["summary"],
+            observed_evidence=safe_dict.get("observed_evidence", []),
+            ai_inferences=safe_dict.get("ai_inferences", []),
             root_cause=safe_dict["root_cause"],
             mitre_mapping=safe_dict["mitre_mapping"],
             threat_hypothesis=safe_dict["threat_hypothesis"],
@@ -122,6 +124,16 @@ class AIInvestigationClient:
         if "brute force" in rule_name or "auth" in rule_name:
             res = {
                 "summary": f"Detected high-frequency authentication attack against host '{host}' targeting account '{username}' from source IP {source_ip}.",
+                "observed_evidence": [
+                    f"Target Host: {host}",
+                    f"Target User Account: {username}",
+                    f"Source IP Address: {source_ip}",
+                    f"Authentication failure events in short time frame"
+                ],
+                "ai_inferences": [
+                    "Adversary is attempting automated dictionary/brute-force password guessing",
+                    "Risk of account takeover if credential reuse is present"
+                ],
                 "root_cause": "Adversary automated dictionary or credential stuffing attack attempting to establish initial access via SSH/Auth gateway.",
                 "mitre_mapping": ["TA0001 - Initial Access", "T1110.001 - Password Guessing", "T1078 - Valid Accounts"],
                 "threat_hypothesis": "External threat actor conducting automated credential discovery to gain an interactive shell and pivot internally.",
@@ -136,6 +148,15 @@ class AIInvestigationClient:
         elif "privilege" in rule_name or "sudo" in rule_name:
             res = {
                 "summary": f"Unauthorized privilege escalation attempt detected on host '{host}'. User '{username}' attempted execution with elevated root privileges.",
+                "observed_evidence": [
+                    f"Target Host: {host}",
+                    f"User: {username}",
+                    "Sudo command execution or setuid binary invocation logged"
+                ],
+                "ai_inferences": [
+                    "User account or process is attempting privilege boundary breakout",
+                    "Potential local privilege escalation (LPE) exploit"
+                ],
                 "root_cause": "User or compromised process invoked sudo / setuid binaries to bypass permission boundaries.",
                 "mitre_mapping": ["TA0004 - Privilege Escalation", "T1548.003 - Sudo and Sudo Caching", "TA0005 - Defense Evasion"],
                 "threat_hypothesis": "Compromised unprivileged account attempting local privilege escalation to achieve persistent root control.",
@@ -149,6 +170,14 @@ class AIInvestigationClient:
         elif "process" in rule_name or "shell" in rule_name:
             res = {
                 "summary": f"Critical suspicious process or reverse shell execution detected on host '{host}'.",
+                "observed_evidence": [
+                    f"Host: {host}",
+                    "Spawning of interactive shell or network-connected interpreter process"
+                ],
+                "ai_inferences": [
+                    "Active command & control (C2) channel established",
+                    "Host integrity compromised"
+                ],
                 "root_cause": "Execution of an interactive reverse shell, unauthorized script interpreter, or obfuscated downloader command.",
                 "mitre_mapping": ["TA0002 - Execution", "T1059.004 - Unix Shell", "TA0011 - Command and Control", "T1071 - Application Layer Protocol"],
                 "threat_hypothesis": "Active interactive shell session established with adversary Command & Control (C2) server.",
@@ -163,6 +192,15 @@ class AIInvestigationClient:
         elif "sql" in rule_name or "web" in rule_name:
             res = {
                 "summary": f"Web application exploit attempt (SQL Injection / Path Traversal) directed at host '{host}' from {source_ip}.",
+                "observed_evidence": [
+                    f"Host: {host}",
+                    f"Source IP: {source_ip}",
+                    "HTTP payload contained SQL syntax / directory traversal signatures"
+                ],
+                "ai_inferences": [
+                    "Adversary is attempting web application tier exploitation",
+                    "Risk of unauthorized database data extraction"
+                ],
                 "root_cause": "Malicious HTTP request containing injected SQL keywords or directory traversal payload designed to extract database content.",
                 "mitre_mapping": ["TA0001 - Initial Access", "T1190 - Exploit Public-Facing Application", "TA0006 - Credential Access"],
                 "threat_hypothesis": "Automated or targeted reconnaissance probing web application tier for input sanitization vulnerabilities.",
@@ -176,6 +214,14 @@ class AIInvestigationClient:
         else:
             res = {
                 "summary": f"Security anomaly detected on host '{host}' under detection rule '{alert_data.get('rule_name', 'Generic Alert')}'.",
+                "observed_evidence": [
+                    f"Host: {host}",
+                    f"Source IP: {source_ip}",
+                    f"Rule: {alert_data.get('rule_name', 'Generic Alert')}"
+                ],
+                "ai_inferences": [
+                    "Anomalous telemetry requiring analyst triage"
+                ],
                 "root_cause": "Observed telemetry deviated from established baseline or matched signature thresholds.",
                 "mitre_mapping": ["TA0043 - Reconnaissance", "T1046 - Network Service Discovery"],
                 "threat_hypothesis": "Potential reconnaissance or unauthorized system interaction requiring analyst review.",

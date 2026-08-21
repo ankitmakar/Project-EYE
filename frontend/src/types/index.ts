@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'soc_analyst' | 'viewer';
+export type UserRole = 'admin' | 'senior_analyst' | 'soc_analyst' | 'viewer' | 'service_account';
 
 export interface User {
   id: string;
@@ -34,13 +34,13 @@ export interface Alert {
   rule_id: string;
   rule_name: string;
   timestamp: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: 'info' | 'low' | 'medium' | 'high' | 'critical';
   confidence: number;
   source: string;
   host: string;
   source_ip?: string;
   username?: string;
-  status: 'new' | 'acknowledged' | 'investigating' | 'resolved' | 'closed';
+  status: 'new' | 'acknowledged' | 'investigating' | 'resolved' | 'closed' | 'false_positive';
   description?: string;
   evidence: Record<string, any>;
   analyst_notes?: string;
@@ -56,8 +56,8 @@ export interface Incident {
   incident_id: string;
   title: string;
   description?: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  status: 'open' | 'investigating' | 'contained' | 'resolved' | 'closed';
+  severity: 'info' | 'low' | 'medium' | 'high' | 'critical';
+  status: 'open' | 'triaged' | 'investigating' | 'contained' | 'resolved' | 'closed' | 'false_positive';
   lead_analyst_id?: string;
   timeline_summary?: string;
   ai_analysis: Record<string, any>;
@@ -104,6 +104,8 @@ export interface AuditLog {
 
 export interface AIAnalysisResponse {
   summary: string;
+  observed_evidence?: string[];
+  ai_inferences?: string[];
   root_cause: string;
   mitre_mapping: string[];
   threat_hypothesis: string;

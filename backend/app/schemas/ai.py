@@ -12,6 +12,8 @@ class AIInvestigateIncidentRequest(BaseModel):
 
 class AIAnalysisResponse(BaseModel):
     summary: str
+    observed_evidence: List[str] = Field(default_factory=list, description="Concrete verifiable facts directly extracted from logs")
+    ai_inferences: List[str] = Field(default_factory=list, description="Analytical conclusions and probabilities derived from evidence")
     root_cause: str
     mitre_mapping: List[str] = Field(default_factory=list)
     threat_hypothesis: str

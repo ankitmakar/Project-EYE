@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, List
 from app.core.exceptions import ValidationException
 
-REQUIRED_AI_FIELDS = ["summary", "root_cause", "mitre_mapping", "threat_hypothesis", "recommended_actions", "confidence"]
+REQUIRED_AI_FIELDS = ["summary", "observed_evidence", "ai_inferences", "root_cause", "mitre_mapping", "threat_hypothesis", "recommended_actions", "confidence"]
 
 class AIOutputValidator:
     @staticmethod
@@ -33,7 +33,7 @@ class AIOutputValidator:
         # Check required fields
         for field in REQUIRED_AI_FIELDS:
             if field not in parsed:
-                if field == "mitre_mapping" or field == "recommended_actions":
+                if field in ("mitre_mapping", "recommended_actions", "observed_evidence", "ai_inferences"):
                     parsed[field] = []
                 elif field == "confidence":
                     parsed[field] = 0.80
@@ -41,6 +41,10 @@ class AIOutputValidator:
                     parsed[field] = "N/A"
 
         # Type normalization
+        if not isinstance(parsed["observed_evidence"], list):
+            parsed["observed_evidence"] = [str(parsed["observed_evidence"])]
+        if not isinstance(parsed["ai_inferences"], list):
+            parsed["ai_inferences"] = [str(parsed["ai_inferences"])]
         if not isinstance(parsed["mitre_mapping"], list):
             parsed["mitre_mapping"] = [str(parsed["mitre_mapping"])]
         if not isinstance(parsed["recommended_actions"], list):
