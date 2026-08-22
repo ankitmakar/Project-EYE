@@ -1,15 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Shield, ShieldAlert, LogOut, UserCheck, Clock } from 'lucide-react';
+import { Shield, ShieldAlert, LogOut, Clock, Volume2, VolumeX, Search, Command } from 'lucide-react';
 import { User } from '../../types';
+import { cyberAudio } from '../../utils/cyberAudio';
 
 interface Props {
   user: User | null;
   onLogout: () => void;
   openIncidentsCount: number;
+  onOpenCommandPalette: () => void;
 }
 
-export const Navbar: React.FC<Props> = ({ user, onLogout, openIncidentsCount }) => {
+export const Navbar: React.FC<Props> = ({
+  user,
+  onLogout,
+  openIncidentsCount,
+  onOpenCommandPalette,
+}) => {
   const [utcTime, setUtcTime] = useState<string>('');
+  const [muted, setMuted] = useState(cyberAudio.getMuted());
 
   useEffect(() => {
     const updateTime = () => {
@@ -21,55 +29,99 @@ export const Navbar: React.FC<Props> = ({ user, onLogout, openIncidentsCount }) 
     return () => clearInterval(interval);
   }, []);
 
+  const handleToggleSound = () => {
+    const isMuted = cyberAudio.toggleMute();
+    setMuted(isMuted);
+  };
+
   const isElevated = openIncidentsCount > 0;
 
   return (
-    <header className="h-16 bg-[#0c1222]/80 backdrop-blur-md border-b border-slate-800/80 px-6 flex items-center justify-between z-10">
-      {/* Left: SOC Operational Readiness Status */}
+    <header className="h-16 bg-[#060913]/80 backdrop-blur-2xl border-b border-white/10 px-6 flex items-center justify-between z-10 select-none">
+      {/* Left: SOC Readiness DEFCON Status */}
       <div className="flex items-center gap-4">
-        <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold border ${
-          isElevated
-            ? 'bg-red-500/15 text-red-300 border-red-500/40 animate-pulse'
-            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-        }`}>
-          {isElevated ? <ShieldAlert className="w-3.5 h-3.5 text-red-400" /> : <Shield className="w-3.5 h-3.5 text-emerald-400" />}
-          <span>DEFCON {isElevated ? '2 - ELEVATED' : '5 - NORMAL'}</span>
-          <span className="text-[10px] text-slate-400 font-sans">({openIncidentsCount} active incidents)</span>
+        <div
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold border transition-all ${
+            isElevated
+              ? 'bg-eye-danger-soft text-eye-danger border-eye-danger/40 shadow-glow-danger animate-eye-pulse'
+              : 'bg-eye-success-soft text-eye-success border-eye-success/40 shadow-glow-success'
+          }`}
+        >
+          {isElevated ? (
+            <ShieldAlert className="w-4 h-4 text-eye-danger" />
+          ) : (
+            <Shield className="w-4 h-4 text-eye-success" />
+          )}
+          <span>DEFCON {isElevated ? '2 - ELEVATED' : '5 - OPTIMAL'}</span>
+          <span className="text-[10px] text-eye-muted font-normal">
+            ({openIncidentsCount} active {openIncidentsCount === 1 ? 'campaign' : 'campaigns'})
+          </span>
         </div>
 
-        <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-400 font-mono">
-          <Clock className="w-3.5 h-3.5 text-cyan-400" />
-          <span>{utcTime || 'UTC Live'}</span>
+        <div className="hidden md:flex items-center gap-2 text-xs text-eye-muted font-mono">
+          <Clock className="w-3.5 h-3.5 text-eye-primary" />
+          <span>{utcTime || 'UTC Active'}</span>
         </div>
       </div>
 
-      {/* Right: Authenticated User & Actions */}
+      {/* Center: Command Palette Trigger */}
+      <button
+        onClick={() => {
+          cyberAudio.playClick();
+          onOpenCommandPalette();
+        }}
+        className="hidden sm:flex items-center gap-3 px-4 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-eye-primary/40 text-xs font-mono text-eye-muted hover:text-eye-text transition-all group shadow-inner"
+      >
+        <Search className="w-3.5 h-3.5 text-eye-primary group-hover:scale-110 transition-transform" />
+        <span>Quick search & actions...</span>
+        <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] bg-black/40 border border-white/10 rounded text-eye-primary">
+          <Command className="w-2.5 h-2.5" /> K
+        </kbd>
+      </button>
+
+      {/* Right: Audio Control, Authenticated User & Actions */}
       <div className="flex items-center gap-4">
+        {/* Sound FX Toggle */}
+        <button
+          onClick={handleToggleSound}
+          title={muted ? 'Enable Cyber Audio FX' : 'Mute Audio FX'}
+          className="p-2 rounded-xl bg-white/5 border border-white/10 hover:border-eye-primary/40 text-eye-muted hover:text-eye-primary transition-colors"
+        >
+          {muted ? (
+            <VolumeX className="w-4 h-4 text-slate-600" />
+          ) : (
+            <Volume2 className="w-4 h-4 text-eye-primary animate-pulse" />
+          )}
+        </button>
+
         {user ? (
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <div className="text-sm font-medium text-slate-200">
+              <div className="text-xs font-mono font-bold text-slate-100">
                 {user.full_name || user.username}
               </div>
-              <div className="text-[11px] font-mono text-cyan-400 uppercase tracking-wider">
+              <div className="text-[10px] font-mono text-eye-primary uppercase tracking-wider">
                 {user.role.replace('_', ' ')}
               </div>
             </div>
 
-            <div className="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-300 font-mono font-bold text-xs">
+            <div className="w-8 h-8 rounded-xl bg-eye-primary-soft border border-eye-primary/40 flex items-center justify-center text-eye-primary font-mono font-bold text-xs shadow-glow-primary">
               {user.username.slice(0, 2).toUpperCase()}
             </div>
 
             <button
-              onClick={onLogout}
+              onClick={() => {
+                cyberAudio.playClick();
+                onLogout();
+              }}
               title="Logout"
-              className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800/60 rounded-lg transition-colors"
+              className="p-2 text-eye-muted hover:text-eye-danger hover:bg-eye-danger-soft rounded-xl transition-colors"
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
         ) : (
-          <div className="text-xs text-slate-400">Not authenticated</div>
+          <div className="text-xs text-eye-muted font-mono">Not authenticated</div>
         )}
       </div>
     </header>

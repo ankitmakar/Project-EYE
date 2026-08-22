@@ -109,7 +109,8 @@ class LogParser:
                 parsed["metadata"]["auth_type"] = "ssh"
                 return parsed
 
-        if source in ["nginx", "apache", "web"] or "HTTP/1." in raw_log:
+        # 4. Web access and webshell / LFI / SQLi detection
+        if source in ["nginx", "apache", "web"] or "HTTP/1." in raw_log or "GET " in raw_log or "POST " in raw_log:
             web_match = WEB_ACCESS_PATTERN.match(raw_log)
             if web_match:
                 g = web_match.groupdict()
@@ -118,10 +119,14 @@ class LogParser:
                 status = int(g.get("status_code", 200))
                 url = g.get("url", "")
                 
-                # Check for suspicious web requests
+                # Check for webshell filenames
                 is_attack = False
                 attack_type = "web_access"
-                if any(sqli in url.lower() for sqli in ["union+select", "' or '1'='1", "select%20", "benchmark(", "sleep(", "union%20select", "version()"]):
+                if any(ws in url.lower() for ws in ["cmd.php", "c99.php", "b374k.php", "shell.jsp", "tunnel.aspx", "wso.php"]):
+                    is_attack = True
+                    attack_type = "webshell_activity"
+                    parsed["severity"] = "critical"
+                elif any(sqli in url.lower() for sqli in ["union+select", "' or '1'='1", "select%20", "benchmark(", "sleep(", "union%20select", "version()"]):
                     is_attack = True
                     attack_type = "sql_injection_attempt"
                     parsed["severity"] = "high"
@@ -144,8 +149,104 @@ class LogParser:
                 })
                 return parsed
 
-        # Windows Event parsing if containing EventID
-        if "EventID:" in raw_log or "Event ID:" in raw_log or "4625" in raw_log or "4624" in raw_log:
+        # 5. SSHD Authentication
+        if "sshd" in raw_log or source in ["linux-auth", "syslog"]:
+            ssh_failed = SSH_FAILED_PATTERN.search(inner_message)
+            if ssh_failed:
+                g = ssh_failed.groupdict()
+                parsed["username"] = g.get("username")
+                parsed["source_ip"] = g.get("source_ip")
+                parsed["event_type"] = "auth_failure"
+                parsed["severity"] = "medium"
+                parsed["message"] = f"SSH authentication failure for user '{parsed['username']}' from {parsed['source_ip']}"
+                parsed["metadata"]["auth_type"] = "ssh"
+                parsed["metadata"]["port"] = g.get("port")
+                return parsed
+
+            ssh_accepted = SSH_ACCEPTED_PATTERN.search(inner_message)
+            if ssh_accepted:
+                g = ssh_accepted.groupdict()
+                parsed["username"] = g.get("username")
+                parsed["source_ip"] = g.get("source_ip")
+                parsed["event_type"] = "auth_success"
+                parsed["severity"] = "info"
+                parsed["message"] = f"SSH authentication successful for user '{parsed['username']}' from {parsed['source_ip']}"
+                parsed["metadata"]["auth_type"] = "ssh"
+                return parsed
+
+        # 6. Endpoint / Shell / Command telemetry detection
+        lower_msg = inner_message.lower()
+        if any(rev in lower_msg for rev in ["/dev/tcp/", "nc -e", "bash -i", "powershell -nop -w hidden -e", "reverse_tcp", "meterpreter"]):
+            parsed["event_type"] = "suspicious_process"
+            parsed["severity"] = "critical"
+            parsed["message"] = f"Interactive reverse shell pattern identified: {inner_message}"
+            parsed["metadata"]["command"] = inner_message
+            return parsed
+
+        if any(obf in lower_msg for obf in ["-enc ", "-encodedcommand", "base64 -d", "echo -n", "| sh", "| bash"]):
+            parsed["event_type"] = "obfuscated_command"
+            parsed["severity"] = "high"
+            parsed["message"] = f"Obfuscated / encoded command execution detected: {inner_message}"
+            parsed["metadata"]["command"] = inner_message
+            return parsed
+
+        if any(lol in lower_msg for lol in ["certutil -urlcache", "bitsadmin /transfer", "curl http://", "wget http://", "mshta http://"]):
+            parsed["event_type"] = "suspicious_lolbin"
+            parsed["severity"] = "high"
+            parsed["message"] = f"Suspicious LOLBin execution or download cradle: {inner_message}"
+            parsed["metadata"]["command"] = inner_message
+            return parsed
+
+        if any(rw in lower_msg for rw in [".locked", ".crypto", ".ransom", "encrypting volume", "ransomware"]):
+            parsed["event_type"] = "ransomware_file_event"
+            parsed["severity"] = "critical"
+            parsed["message"] = f"Ransomware file encryption activity detected: {inner_message}"
+            return parsed
+
+        if any(sh in lower_msg for sh in ["/etc/shadow", "sam\\domains\\account", "lsass.exe", "sekurlsa"]):
+            parsed["event_type"] = "sensitive_file_access"
+            parsed["severity"] = "critical"
+            parsed["message"] = f"Sensitive credential store / shadow file accessed: {inner_message}"
+            return parsed
+
+        if any(pers in lower_msg for pers in ["crontab -e", "/etc/cron", "/etc/systemd/system/", "schtasks /create"]):
+            parsed["event_type"] = "persistence_cron"
+            parsed["severity"] = "high"
+            parsed["message"] = f"Persistence scheduled task or cron job created: {inner_message}"
+            return parsed
+
+        if ".ssh/authorized_keys" in lower_msg:
+            parsed["event_type"] = "ssh_key_modification"
+            parsed["severity"] = "high"
+            parsed["message"] = f"SSH authorized_keys modified: {inner_message}"
+            return parsed
+
+        if "dns_query" in lower_msg or "dns-tunnel" in lower_msg or "entropy" in lower_msg:
+            parsed["event_type"] = "dns_tunneling_suspicion"
+            parsed["severity"] = "high"
+            parsed["message"] = f"DNS Tunneling / High entropy query detected: {inner_message}"
+            return parsed
+
+        if "beacon" in lower_msg or "heartbeat_interval" in lower_msg:
+            parsed["event_type"] = "c2_beaconing"
+            parsed["severity"] = "high"
+            parsed["message"] = f"C2 periodic beaconing heartbeat detected: {inner_message}"
+            return parsed
+
+        if "port_scan" in lower_msg or "syn_flood" in lower_msg or "nmap" in lower_msg:
+            parsed["event_type"] = "port_scan"
+            parsed["severity"] = "medium"
+            parsed["message"] = f"Network port scanning activity detected: {inner_message}"
+            return parsed
+
+        if "malicious_ioc" in lower_msg or "bad_reputation" in lower_msg or "threat_intel_match" in lower_msg:
+            parsed["event_type"] = "malicious_ioc_traffic"
+            parsed["severity"] = "critical"
+            parsed["message"] = f"Outbound connection to known malicious IOC: {inner_message}"
+            return parsed
+
+        # 7. Windows Event parsing if containing EventID
+        if "EventID:" in raw_log or "Event ID:" in raw_log or "4625" in raw_log or "4624" in raw_log or "4720" in raw_log:
             if "4625" in raw_log:
                 parsed["event_type"] = "windows_logon_failure"
                 parsed["severity"] = "medium"

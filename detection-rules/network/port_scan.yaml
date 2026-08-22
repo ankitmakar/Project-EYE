@@ -1,0 +1,17 @@
+rule_id: "NET-003"
+name: "Network Reconnaissance Port Scan"
+description: "Detects rapid connection attempts to multiple distinct destination ports from a single source host within a brief timeframe."
+severity: "medium"
+confidence: 0.85
+mitre_tactic: "Discovery"
+mitre_technique: "T1046 - Network Service Discovery"
+enabled: true
+condition:
+  event_type: "port_scan"
+threshold:
+  count: 10
+  timeframe_seconds: 30
+  group_by:
+    - "source_ip"
+investigation_guidance: "Identify source machine IP, determine if it is an internal host or perimeter gateway, review targeted ports."
+false_positives: "Vulnerability scanners like Nessus or network asset inventory discovery tools."

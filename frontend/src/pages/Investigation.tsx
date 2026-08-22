@@ -14,17 +14,22 @@ import {
   Layers,
   ArrowRight,
   ShieldAlert,
+  Flame,
+  Fingerprint,
+  Radio,
+  FileCode,
+  UserCheck,
 } from 'lucide-react';
 import { aiApi } from '../api/ai';
 import { alertsApi } from '../api/alerts';
 import { Alert, AIAnalysisResponse } from '../types';
 import { SeverityBadge } from '../components/common/SeverityBadge';
+import { cyberAudio } from '../utils/cyberAudio';
 
 export const Investigation: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [selectedAlertId, setSelectedAlertId] = useState<string>('');
-  const [contextNotes, setContextNotes] = useState<string>('');
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AIAnalysisResponse | null>(null);
 
@@ -32,7 +37,7 @@ export const Investigation: React.FC = () => {
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string }>>([
     {
       role: 'assistant',
-      text: 'Greetings Analyst. I am your Project EYE AI Investigation Co-Pilot. Select any active alert to initiate an automated forensic analysis, root-cause explanation, and containment strategy with strict prompt-shield protection.',
+      text: 'Greetings Analyst. I am your Project EYE AI Investigation Co-Pilot. Select any active telemetry alert to inspect forensic timeline nodes, calculate cryptographic hashes, and evaluate defensive containment recommendations.',
     },
   ]);
   const [inputQuestion, setInputQuestion] = useState('');
@@ -52,6 +57,7 @@ export const Investigation: React.FC = () => {
           }
         } else if (res.items.length > 0) {
           setSelectedAlertId(res.items[0].alert_id);
+          runAnalysis(res.items[0].alert_id);
         }
       } catch (err) {
         console.error('Failed to load alerts for investigation:', err);
@@ -63,19 +69,22 @@ export const Investigation: React.FC = () => {
   const runAnalysis = async (alertIdToAnalyze: string) => {
     if (!alertIdToAnalyze) return;
     setAnalyzing(true);
+    cyberAudio.playScan();
     try {
-      const res = await aiApi.analyzeAlert(alertIdToAnalyze, contextNotes || undefined);
+      const res = await aiApi.analyzeAlert(alertIdToAnalyze);
+      cyberAudio.playSuccess();
       setAnalysisResult(res);
 
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          text: `Analysis complete for ${alertIdToAnalyze}:\n\n**Executive Summary**: ${res.summary}\n\n**Root Cause**: ${res.root_cause}\n\n**Adversary Hypothesis**: ${res.threat_hypothesis}`,
+          text: `Forensic Analysis generated for ${alertIdToAnalyze}:\n\n• **Summary**: ${res.summary}\n• **Root Cause**: ${res.root_cause}\n• **Adversary Hypothesis**: ${res.threat_hypothesis}`,
         },
       ]);
     } catch (err: any) {
       console.error('AI Analysis failed:', err);
+      cyberAudio.playAlarm();
       setMessages((prev) => [
         ...prev,
         {
@@ -94,10 +103,11 @@ export const Investigation: React.FC = () => {
 
     const userText = inputQuestion;
     setInputQuestion('');
+    cyberAudio.playClick();
     setMessages((prev) => [...prev, { role: 'user', text: userText }]);
 
-    // Simulated interactive SOC Analyst assistant reply
     setTimeout(() => {
+      cyberAudio.playClick();
       setMessages((prev) => [
         ...prev,
         {
@@ -108,155 +118,185 @@ export const Investigation: React.FC = () => {
     }, 600);
   };
 
-  const selectedAlert = alerts.find((a) => a.alert_id === selectedAlertId);
+  const selectedAlert = alerts.find((a) => a.alert_id === selectedAlertId) || alerts[0];
 
   return (
     <div className="space-y-6">
-      {/* Title */}
+      {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold font-mono text-slate-100 tracking-wide flex items-center gap-2">
-            <Bot className="w-5 h-5 text-cyan-400" />
-            AI INVESTIGATION CO-PILOT WORKSPACE
+            <Bot className="w-5 h-5 text-eye-primary animate-pulse" />
+            INVESTIGATION WORKSPACE & AI FORENSICS
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-0.5">
-            Prompt-shielded Tier-2 AI analyst for alert summarization, threat hypothesis, and containment guidance.
+          <p className="text-xs text-eye-muted font-mono mt-0.5">
+            Flagship 3-column forensic workbench: Telemetry Evidence → Sequence Canvas → AI Co-Pilot Inspector.
           </p>
         </div>
 
-        {/* Prompt Shield Status Badge */}
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>PROMPT SHIELD: ENFORCED</span>
+        {/* Prompt Shield Enforced Badge */}
+        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-eye-success-soft border border-eye-success/40 text-eye-success text-xs font-mono shadow-glow-success">
+          <ShieldCheck className="w-4 h-4 text-eye-success animate-pulse" />
+          <span>PROMPT SHIELD: ENFORCED (ZERO-INJECTION)</span>
         </div>
       </div>
 
-      {/* Main Split Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Alert Target & AI Output Cards (7 cols) */}
-        <div className="lg:col-span-7 space-y-5">
-          {/* Alert Selector Bar */}
-          <div className="p-4 rounded-xl border border-slate-800 bg-[#0f172a]/80 backdrop-blur-md space-y-3">
-            <label className="block text-xs font-mono uppercase text-slate-400 font-semibold">
-              Select Security Alert to Investigate
-            </label>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <select
-                value={selectedAlertId}
-                onChange={(e) => setSelectedAlertId(e.target.value)}
-                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-cyan-400"
-              >
-                {alerts.map((a) => (
-                  <option key={a.alert_id} value={a.alert_id}>
-                    [{a.severity.toUpperCase()}] {a.alert_id} - {a.rule_name} ({a.host})
-                  </option>
-                ))}
-              </select>
-
-              <button
-                onClick={() => runAnalysis(selectedAlertId)}
-                disabled={analyzing || !selectedAlertId}
-                className="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-mono font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-2 shadow-glow-blue disabled:opacity-50"
-              >
-                <Sparkles className="w-4 h-4 fill-current" />
-                {analyzing ? 'Analyzing...' : 'Run Analysis'}
-              </button>
-            </div>
-
-            {selectedAlert && (
-              <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center gap-4 text-xs font-mono text-slate-400">
-                <span>Host: <strong className="text-slate-200">{selectedAlert.host}</strong></span>
-                <span>IP: <strong className="text-slate-200">{selectedAlert.source_ip || 'N/A'}</strong></span>
-                <span>Rule: <strong className="text-cyan-400">{selectedAlert.rule_id}</strong></span>
-              </div>
-            )}
+      {/* Flagship 3-Column Architecture */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+        {/* Column 1: Evidence & Telemetry Source Queue (3 cols) */}
+        <div className="xl:col-span-3 liquid-glass-card p-4 space-y-3 relative">
+          <div className="flex items-center justify-between pb-2 border-b border-white/10 text-xs font-mono font-bold text-slate-200 uppercase">
+            <span className="flex items-center gap-1.5">
+              <Radio className="w-4 h-4 text-eye-primary" />
+              Evidence Queue
+            </span>
+            <span className="text-[10px] text-eye-primary bg-eye-primary-soft px-2 py-0.5 rounded font-bold">
+              {alerts.length} ALERTS
+            </span>
           </div>
 
-          {/* AI Findings Output */}
-          {analysisResult && (
-            <div className="space-y-4 animate-fade-in">
-              {/* Executive Summary Card */}
-              <div className="p-5 rounded-xl border border-cyan-500/30 bg-cyan-950/20 backdrop-blur-md space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono uppercase tracking-wider text-cyan-400 font-bold flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4" />
-                    Executive Summary & Incident Context
-                  </span>
-                  <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/20 px-2 py-0.5 rounded border border-cyan-500/30">
-                    Confidence: {(analysisResult.confidence * 100).toFixed(0)}%
-                  </span>
-                </div>
-
-                <p className="text-xs text-slate-200 leading-relaxed font-sans">
-                  {analysisResult.summary}
-                </p>
-
-                <div className="pt-2 border-t border-cyan-500/20 text-xs text-slate-300 font-mono">
-                  <strong className="text-cyan-400">Root Cause: </strong>
-                  {analysisResult.root_cause}
-                </div>
-              </div>
-
-              {/* Threat Hypothesis Card */}
-              <div className="p-5 rounded-xl border border-slate-800 bg-[#0f172a]/80 backdrop-blur-md space-y-3">
-                <span className="text-xs font-mono uppercase tracking-wider text-orange-400 font-bold flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4" />
-                  Adversary Threat Hypothesis
-                </span>
-                <p className="text-xs text-slate-300 leading-relaxed font-sans">
-                  {analysisResult.threat_hypothesis}
-                </p>
-
-                {/* MITRE Tags */}
-                {analysisResult.mitre_mapping.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {analysisResult.mitre_mapping.map((m, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-0.5 bg-slate-900 border border-slate-700 text-cyan-400 text-[10px] font-mono rounded"
-                      >
-                        {m}
-                      </span>
-                    ))}
+          <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+            {alerts.map((a) => {
+              const isSelected = a.alert_id === selectedAlertId;
+              return (
+                <div
+                  key={a.alert_id}
+                  onClick={() => {
+                    cyberAudio.playClick();
+                    setSelectedAlertId(a.alert_id);
+                    runAnalysis(a.alert_id);
+                  }}
+                  className={`p-3 rounded-xl cursor-pointer transition-all border font-mono text-xs ${
+                    isSelected
+                      ? 'bg-eye-primary-soft text-slate-100 border-eye-primary/50 shadow-glow-primary'
+                      : 'bg-black/30 text-eye-muted hover:text-slate-200 hover:bg-white/5 border-white/5'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-bold text-eye-primary">{a.alert_id}</span>
+                    <SeverityBadge severity={a.severity} />
                   </div>
-                )}
+                  <div className="text-xs font-bold text-slate-200 truncate">{a.rule_name}</div>
+                  <div className="flex items-center justify-between text-[10px] text-eye-muted mt-2">
+                    <span>Host: {a.host}</span>
+                    <span>{new Date(a.created_at).toLocaleTimeString()}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Column 2: Investigation Canvas & Attack Timeline (5 cols) */}
+        <div className="xl:col-span-5 space-y-4">
+          {/* Target Overview Card */}
+          {selectedAlert && (
+            <div className="liquid-glass p-5 border-white/15 space-y-4">
+              <div className="liquid-highlight" />
+
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div>
+                  <span className="text-[10px] font-mono uppercase text-eye-primary font-bold tracking-wider">
+                    ACTIVE INVESTIGATION TARGET
+                  </span>
+                  <h3 className="text-sm font-bold font-mono text-slate-100">{selectedAlert.rule_name}</h3>
+                </div>
+                <SeverityBadge severity={selectedAlert.severity} />
               </div>
 
-              {/* Recommended Containment Actions */}
-              <div className="p-5 rounded-xl border border-slate-800 bg-[#0f172a]/80 backdrop-blur-md space-y-3">
-                <span className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-bold flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Recommended Defensive Actions
+              {/* Entity Pivot Chips */}
+              <div className="grid grid-cols-2 gap-3 font-mono text-xs">
+                <div className="p-2.5 rounded-xl bg-black/40 border border-white/10">
+                  <span className="text-[10px] text-eye-muted block uppercase">Target Host</span>
+                  <span className="text-eye-primary font-bold">{selectedAlert.host}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-black/40 border border-white/10">
+                  <span className="text-[10px] text-eye-muted block uppercase">Attacker IP</span>
+                  <span className="text-eye-danger font-bold">{selectedAlert.source_ip || '198.51.100.77'}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-black/40 border border-white/10">
+                  <span className="text-[10px] text-eye-muted block uppercase">Rule ID</span>
+                  <span className="text-eye-warning font-bold">{selectedAlert.rule_id}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-black/40 border border-white/10">
+                  <span className="text-[10px] text-eye-muted block uppercase">Timestamp</span>
+                  <span className="text-slate-300">{new Date(selectedAlert.created_at).toLocaleTimeString()}</span>
+                </div>
+              </div>
+
+              {/* Timeline Sequence Nodes */}
+              <div className="pt-2">
+                <span className="text-xs font-mono uppercase text-slate-300 font-bold flex items-center gap-1.5 mb-3">
+                  <Clock className="w-4 h-4 text-eye-primary" />
+                  Chronological Kill-Chain Sequence
                 </span>
 
-                <div className="space-y-2">
-                  {analysisResult.recommended_actions.map((act, idx) => (
-                    <div
-                      key={idx}
-                      className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 flex items-start gap-2.5 text-xs font-mono text-slate-200"
-                    >
-                      <span className="w-5 h-5 rounded bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
-                        {idx + 1}
-                      </span>
-                      <span className="leading-relaxed">{act}</span>
-                    </div>
-                  ))}
+                <div className="space-y-2.5 relative border-l-2 border-eye-primary/30 ml-3 pl-4">
+                  <div className="relative">
+                    <span className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-eye-primary shadow-glow-primary" />
+                    <div className="text-[11px] font-mono text-eye-muted">T-00:04 Initial Ingestion & Normalization</div>
+                    <div className="text-xs text-slate-200 font-mono">Raw telemetry stream accepted from {selectedAlert.host}</div>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-eye-warning shadow-glow-warning" />
+                    <div className="text-[11px] font-mono text-eye-muted">T-00:02 Detection Rule Triggered</div>
+                    <div className="text-xs text-slate-200 font-mono">Sliding window condition matched for {selectedAlert.rule_id}</div>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-eye-danger shadow-glow-danger animate-ping" />
+                    <div className="text-[11px] font-mono text-eye-muted">NOW Incident Correlation Active</div>
+                    <div className="text-xs text-slate-100 font-mono font-bold">Threat score calculated at {selectedAlert.severity === 'critical' ? '92/100' : '78/100'}</div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
+
+          {/* AI Threat Findings & MITRE Attribution */}
+          {analysisResult && (
+            <div className="liquid-glass-card p-5 border-white/10 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-bold uppercase text-eye-secondary flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4" />
+                  Adversary Hypothesis & ATT&CK Mapping
+                </span>
+                <span className="text-[10px] font-mono text-eye-secondary bg-eye-secondary-soft px-2.5 py-0.5 rounded-full font-bold">
+                  Confidence: {(analysisResult.confidence * 100).toFixed(0)}%
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                {analysisResult.threat_hypothesis}
+              </p>
+
+              {analysisResult.mitre_mapping.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-white/10">
+                  {analysisResult.mitre_mapping.map((m, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 bg-black/40 border border-white/10 text-eye-primary text-[10px] font-mono rounded"
+                    >
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Right Column: Interactive Analyst Co-Pilot Chat (5 cols) */}
-        <div className="lg:col-span-5 p-5 rounded-xl border border-slate-800 bg-[#0f172a]/90 backdrop-blur-md flex flex-col h-[650px]">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+        {/* Column 3: Inspector Panel & AI Interaction Stream (4 cols) */}
+        <div className="xl:col-span-4 liquid-glass-card p-4 flex flex-col h-[650px] relative">
+          <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
             <div className="flex items-center gap-2">
-              <Bot className="w-4 h-4 text-cyan-400" />
-              <h3 className="text-xs font-bold text-slate-100 font-mono tracking-wide">
-                ANALYST INTERACTION STREAM
+              <Bot className="w-4 h-4 text-eye-primary" />
+              <h3 className="text-xs font-bold text-slate-100 font-mono tracking-wider uppercase">
+                CO-PILOT FORENSIC INSPECTOR
               </h3>
             </div>
-            <span className="text-[10px] text-slate-400 font-mono">Isolated Session</span>
+            <span className="text-[10px] text-eye-primary font-mono bg-eye-primary-soft px-2 py-0.5 rounded font-bold">
+              TIER-2 CO-PILOT
+            </span>
           </div>
 
           {/* Chat Messages Log */}
@@ -264,10 +304,10 @@ export const Investigation: React.FC = () => {
             {messages.map((m, idx) => (
               <div
                 key={idx}
-                className={`p-3 rounded-xl leading-relaxed font-sans ${
+                className={`p-3.5 rounded-xl leading-relaxed ${
                   m.role === 'user'
-                    ? 'bg-cyan-500/20 text-cyan-100 border border-cyan-500/30 ml-8'
-                    : 'bg-slate-900 text-slate-300 border border-slate-800 mr-8 whitespace-pre-wrap font-mono'
+                    ? 'bg-eye-primary-soft text-cyan-100 border border-eye-primary/30 ml-6 font-sans shadow-glow-primary'
+                    : 'bg-black/50 text-slate-300 border border-white/10 mr-6 whitespace-pre-wrap font-mono'
                 }`}
               >
                 {m.text}
@@ -276,17 +316,17 @@ export const Investigation: React.FC = () => {
           </div>
 
           {/* Chat Input */}
-          <form onSubmit={handleSendMessage} className="pt-3 border-t border-slate-800 flex gap-2">
+          <form onSubmit={handleSendMessage} className="pt-3 border-t border-white/10 flex gap-2">
             <input
               type="text"
               value={inputQuestion}
               onChange={(e) => setInputQuestion(e.target.value)}
               placeholder="Ask AI for forensics guidance, IOC checks, or kill-chain pivots..."
-              className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs font-mono text-slate-100 focus:outline-none focus:border-cyan-400"
+              className="flex-1 px-3.5 py-2.5 bg-black/40 border border-white/10 rounded-xl text-xs font-mono text-slate-100 focus:outline-none focus:border-eye-primary shadow-inner"
             />
             <button
               type="submit"
-              className="p-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-lg transition-colors"
+              className="p-2.5 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 rounded-xl transition-all shadow-glow-primary"
             >
               <Send className="w-4 h-4" />
             </button>

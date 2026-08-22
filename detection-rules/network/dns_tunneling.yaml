@@ -1,0 +1,12 @@
+rule_id: "NET-001"
+name: "DNS Tunneling / High-Entropy Data Exfiltration"
+description: "Detects abnormally long DNS queries with high Shannon entropy, indicating DNS-based C2 communication or data exfiltration."
+severity: "high"
+confidence: 0.90
+mitre_tactic: "Command and Control"
+mitre_technique: "T1071.004 - Application Layer Protocol: DNS"
+enabled: true
+condition:
+  event_type: "dns_tunneling_suspicion"
+investigation_guidance: "Inspect query subdomain labels, calculate entropy scores, query TXT/NULL record volumes, identify requesting client PID."
+false_positives: "Antivirus cloud lookups or CDN hostname resolution with encoded hashes."

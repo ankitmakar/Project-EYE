@@ -1,0 +1,12 @@
+rule_id: "EXEC-003"
+name: "Suspicious LOLBin & Remote Download Cradle"
+description: "Detects living-off-the-land binaries (certutil, curl, wget, bitsadmin, mshta) used to fetch remote payloads or execute external code."
+severity: "high"
+confidence: 0.88
+mitre_tactic: "Command and Control"
+mitre_technique: "T1105 - Ingress Tool Transfer"
+enabled: true
+condition:
+  event_type: "suspicious_lolbin"
+investigation_guidance: "Examine downloaded artifact URL/IP, hash the downloaded binary, verify parent process invocation context."
+false_positives: "Legitimate administrator package download scripts or automated patching routines."

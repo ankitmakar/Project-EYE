@@ -1,0 +1,12 @@
+rule_id: "PERS-001"
+name: "Malicious Scheduled Task / Cron Job Created"
+description: "Detects creation or modification of system crontab entries, systemd timer units, or Windows scheduled tasks executing external binaries."
+severity: "high"
+confidence: 0.90
+mitre_tactic: "Persistence"
+mitre_technique: "T1053.003 - Scheduled Task/Job: Cron"
+enabled: true
+condition:
+  event_type: "persistence_cron"
+investigation_guidance: "Inspect cron job command arguments, script destination, file permissions, and author user account."
+false_positives: "Legitimate software installers adding cron jobs for log rotation or updates."

@@ -1,0 +1,12 @@
+rule_id: "WEB-002"
+name: "Directory & Path Traversal (LFI) Attempt"
+description: "Detects HTTP requests containing directory traversal sequences (../, %2e%2e%2f, /etc/passwd, /win.ini) attempting Local File Inclusion."
+severity: "high"
+confidence: 0.90
+mitre_tactic: "Initial Access"
+mitre_technique: "T1190 - Exploit Public-Facing Application"
+enabled: true
+condition:
+  event_type: "path_traversal_attempt"
+investigation_guidance: "Check if sensitive files were returned in HTTP response body, identify originating source IP, patch application parameter handling."
+false_positives: "Legitimate documentation systems querying markdown documents using relative paths."

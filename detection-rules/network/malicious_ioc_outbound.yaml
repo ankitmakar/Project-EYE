@@ -1,0 +1,12 @@
+rule_id: "NET-004"
+name: "Outbound Connection to Known Malicious IOC"
+description: "Detects traffic routed to an IP address, domain, or URL marked as high-confidence malicious in threat intelligence feeds."
+severity: "critical"
+confidence: 0.96
+mitre_tactic: "Command and Control"
+mitre_technique: "T1071 - Application Layer Protocol"
+enabled: true
+condition:
+  event_type: "malicious_ioc_traffic"
+investigation_guidance: "Isolate host from the network, check process owning the socket, retrieve full network payload, review IOC reputation."
+false_positives: "Stale threat intelligence lists containing recycled cloud provider IPs."

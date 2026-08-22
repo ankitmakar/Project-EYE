@@ -1,0 +1,18 @@
+rule_id: "AUTH-001"
+name: "SSH Brute Force Attack"
+description: "Detects multiple failed SSH authentication attempts from a single source IP targeting host systems within a short time window."
+severity: "high"
+confidence: 0.90
+mitre_tactic: "Credential Access"
+mitre_technique: "T1110.001 - Brute Force: Password Guessing"
+enabled: true
+condition:
+  event_type: "auth_failure"
+threshold:
+  count: 5
+  timeframe_seconds: 60
+  group_by:
+    - "source_ip"
+    - "host"
+investigation_guidance: "Review source IP reputation, targeted user accounts, and check if any subsequent authentication succeeded."
+false_positives: "Automated vulnerability scanners or users with misconfigured SSH keys."

@@ -1,0 +1,12 @@
+rule_id: "WEB-004"
+name: "Web Shell Interaction & Execution"
+description: "Detects HTTP requests directed to known webshell filenames (cmd.php, c99.php, b374k.php, shell.jsp, tunnel.aspx) with command execution parameters."
+severity: "critical"
+confidence: 0.98
+mitre_tactic: "Persistence"
+mitre_technique: "T1505.003 - Server Software Component: Web Shell"
+enabled: true
+condition:
+  event_type: "webshell_activity"
+investigation_guidance: "Quarantine web server node immediately, remove backdoored files, review web server upload directory permissions."
+false_positives: "Rarely any in production; developers testing test scripts in isolated dev instances."

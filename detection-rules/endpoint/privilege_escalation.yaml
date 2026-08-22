@@ -1,0 +1,12 @@
+rule_id: "PRIV-001"
+name: "Sudo Root Privilege Escalation"
+description: "Detects unauthorized or suspicious sudo execution elevating privileges to root/admin."
+severity: "medium"
+confidence: 0.85
+mitre_tactic: "Privilege Escalation"
+mitre_technique: "T1548.003 - Sudo and Sudo Caching"
+enabled: true
+condition:
+  event_type: "privilege_escalation"
+investigation_guidance: "Verify user authorization against sudoers policy, check if user session originated from an anomalous IP address."
+false_positives: "Scheduled sysadmin maintenance commands or automated provisioning scripts."

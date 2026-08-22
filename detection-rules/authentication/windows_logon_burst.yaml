@@ -1,0 +1,17 @@
+rule_id: "AUTH-004"
+name: "Windows Logon Failures Burst"
+description: "Detects rapid Windows EventID 4625 logon failure bursts indicating localized credential stuffing or Kerberos brute force."
+severity: "high"
+confidence: 0.88
+mitre_tactic: "Credential Access"
+mitre_technique: "T1110.001 - Brute Force"
+enabled: true
+condition:
+  event_type: "windows_logon_failure"
+threshold:
+  count: 4
+  timeframe_seconds: 90
+  group_by:
+    - "host"
+investigation_guidance: "Inspect domain controller event logs, evaluate logon type (Type 3 network, Type 10 RDP), identify origin workstation."
+false_positives: "Expired Windows service account or automated network share reconnect."

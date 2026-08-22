@@ -1,0 +1,51 @@
+:root {
+  /* EYE Theme Foundation */
+  --eye-bg: #05070d;
+  --eye-bg-elevated: #0a0f18;
+
+  /* Surfaces & Glass */
+  --eye-surface: rgba(255, 255, 255, 0.045);
+  --eye-surface-strong: rgba(255, 255, 255, 0.085);
+  --eye-surface-card: rgba(10, 15, 26, 0.65);
+
+  /* Borders */
+  --eye-border: rgba(255, 255, 255, 0.10);
+  --eye-border-strong: rgba(255, 255, 255, 0.18);
+  --eye-border-glow: rgba(77, 231, 255, 0.35);
+
+  /* Typography Colors */
+  --eye-text: #eef7ff;
+  --eye-text-muted: #8ea1b7;
+  --eye-text-dim: #617084;
+
+  /* Accent & Semantic Palette */
+  --eye-primary: #4de7ff;
+  --eye-primary-soft: rgba(77, 231, 255, 0.16);
+
+  --eye-secondary: #9b7cff;
+  --eye-secondary-soft: rgba(155, 124, 255, 0.16);
+
+  --eye-success: #55e6a5;
+  --eye-success-soft: rgba(85, 230, 165, 0.16);
+
+  --eye-warning: #ffc857;
+  --eye-warning-soft: rgba(255, 200, 87, 0.16);
+
+  --eye-danger: #ff5c7a;
+  --eye-danger-soft: rgba(255, 92, 122, 0.16);
+
+  --eye-info: #65a7ff;
+  --eye-info-soft: rgba(101, 167, 255, 0.16);
+
+  /* Design Tokens: Radius */
+  --eye-radius-sm: 10px;
+  --eye-radius-md: 14px;
+  --eye-radius-lg: 18px;
+  --eye-radius-xl: 24px;
+  --eye-radius-2xl: 32px;
+
+  /* Design Tokens: Blur */
+  --eye-blur-sm: 12px;
+  --eye-blur-md: 20px;
+  --eye-blur-lg: 32px;
+}

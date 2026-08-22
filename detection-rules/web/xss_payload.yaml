@@ -1,0 +1,12 @@
+rule_id: "WEB-003"
+name: "Cross-Site Scripting (XSS) Payload"
+description: "Detects injection of HTML/JavaScript tags (<script>, javascript:, onerror=) in web request parameters."
+severity: "medium"
+confidence: 0.85
+mitre_tactic: "Initial Access"
+mitre_technique: "T1189 - Drive-by Compromise"
+enabled: true
+condition:
+  event_type: "xss_attempt"
+investigation_guidance: "Evaluate whether web app encodes output properly, check if payload reached reflected or stored DOM contexts."
+false_positives: "Technical support portals accepting code snippets in ticket descriptions."

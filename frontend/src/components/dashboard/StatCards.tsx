@@ -8,42 +8,48 @@ interface Props {
 }
 
 export const StatCards: React.FC<Props> = ({ metrics, loading }) => {
+  const isElevated = (metrics?.open_incidents ?? 0) > 0;
+
   const cards = [
     {
-      title: 'TOTAL INGESTED EVENTS',
+      title: 'TELEMETRY INGESTION',
       value: metrics ? metrics.total_events.toLocaleString() : '0',
-      change: '+14.2% / hr',
+      change: 'Active Stream: 120 evt/s',
       icon: Activity,
-      color: 'text-cyan-400',
-      borderColor: 'border-cyan-500/20',
-      bgGlow: 'bg-cyan-500/5',
+      textColor: 'text-eye-primary',
+      borderColor: 'border-eye-primary/30',
+      softBg: 'bg-eye-primary-soft',
+      glowShadow: 'hover:shadow-glow-primary',
     },
     {
-      title: 'ACTIVE SECURITY ALERTS',
+      title: 'SECURITY ALERTS QUEUE',
       value: metrics ? metrics.total_alerts.toString() : '0',
-      change: 'Requiring Triage',
+      change: 'Requiring L1/L2 Triage',
       icon: BellRing,
-      color: 'text-orange-400',
-      borderColor: 'border-orange-500/20',
-      bgGlow: 'bg-orange-500/5',
+      textColor: 'text-eye-warning',
+      borderColor: 'border-eye-warning/30',
+      softBg: 'bg-eye-warning-soft',
+      glowShadow: 'hover:shadow-glow-warning',
     },
     {
-      title: 'OPEN INCIDENTS',
+      title: 'ACTIVE INCIDENT CHAINS',
       value: metrics ? metrics.open_incidents.toString() : '0',
-      change: 'Active Campaigns',
+      change: 'Correlated Campaigns',
       icon: Flame,
-      color: 'text-red-400',
-      borderColor: 'border-red-500/20',
-      bgGlow: 'bg-red-500/5',
+      textColor: 'text-eye-danger',
+      borderColor: 'border-eye-danger/30',
+      softBg: 'bg-eye-danger-soft',
+      glowShadow: 'hover:shadow-glow-danger',
     },
     {
-      title: 'SOC THREAT LEVEL',
-      value: (metrics?.open_incidents ?? 0) > 0 ? 'ELEVATED' : 'NORMAL',
+      title: 'PLATFORM DEFCON STATUS',
+      value: isElevated ? 'DEFCON 2 (ELEVATED)' : 'DEFCON 5 (OPTIMAL)',
       change: 'Prompt Shield Active',
-      icon: ShieldAlert,
-      color: (metrics?.open_incidents ?? 0) > 0 ? 'text-red-400' : 'text-emerald-400',
-      borderColor: (metrics?.open_incidents ?? 0) > 0 ? 'border-red-500/30' : 'border-emerald-500/20',
-      bgGlow: (metrics?.open_incidents ?? 0) > 0 ? 'bg-red-500/10 shadow-glow-red' : 'bg-emerald-500/5',
+      icon: isElevated ? ShieldAlert : CheckCircle2,
+      textColor: isElevated ? 'text-eye-danger' : 'text-eye-success',
+      borderColor: isElevated ? 'border-eye-danger/50' : 'border-eye-success/30',
+      softBg: isElevated ? 'bg-eye-danger-soft' : 'bg-eye-success-soft',
+      glowShadow: isElevated ? 'shadow-glow-danger' : 'hover:shadow-glow-success',
     },
   ];
 
@@ -52,27 +58,27 @@ export const StatCards: React.FC<Props> = ({ metrics, loading }) => {
       {cards.map((c, i) => (
         <div
           key={i}
-          className={`p-5 rounded-xl border ${c.borderColor} ${c.bgGlow} bg-[#0f172a]/70 backdrop-blur-md relative overflow-hidden group transition-all duration-200 hover:border-slate-600`}
+          className={`liquid-glass-card p-5 border ${c.borderColor} ${c.glowShadow} overflow-hidden group transition-all duration-300`}
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-mono font-semibold tracking-wider text-slate-400 uppercase">
+            <span className="text-[10px] font-mono font-bold tracking-widest text-eye-muted uppercase">
               {c.title}
             </span>
-            <div className={`p-2 rounded-lg bg-slate-900/60 border border-slate-800 ${c.color}`}>
+            <div className={`p-2 rounded-xl bg-black/40 border border-white/10 ${c.textColor} shadow-inner`}>
               <c.icon className="w-4 h-4" />
             </div>
           </div>
 
           <div className="text-2xl font-bold font-mono text-slate-100 mb-1 tracking-tight">
             {loading ? (
-              <span className="animate-pulse inline-block w-16 h-7 bg-slate-800 rounded" />
+              <span className="animate-pulse inline-block w-20 h-7 bg-white/10 rounded" />
             ) : (
               c.value
             )}
           </div>
 
-          <div className="text-xs text-slate-400 font-mono flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+          <div className="text-[11px] text-eye-muted font-mono flex items-center gap-1.5 mt-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-eye-primary animate-pulse" />
             {c.change}
           </div>
         </div>

@@ -1,0 +1,12 @@
+rule_id: "PRIV-002"
+name: "Sensitive Shadow / SAM File Access"
+description: "Detects unauthorized attempts to access /etc/shadow, SAM registry hives, or LSASS memory dumps containing password hashes."
+severity: "critical"
+confidence: 0.95
+mitre_tactic: "Credential Access"
+mitre_technique: "T1003.002 - Security Account Manager"
+enabled: true
+condition:
+  event_type: "sensitive_file_access"
+investigation_guidance: "Audit file read events, check user privileges, inspect process calling the credential store."
+false_positives: "Authorized backup software archiving system state."

@@ -1,0 +1,12 @@
+rule_id: "PERS-002"
+name: "SSH Authorized Keys Modification"
+description: "Detects unauthorized additions or modifications to ~/.ssh/authorized_keys indicating persistence establishment."
+severity: "high"
+confidence: 0.90
+mitre_tactic: "Persistence"
+mitre_technique: "T1098.004 - SSH Authorized Keys"
+enabled: true
+condition:
+  event_type: "ssh_key_modification"
+investigation_guidance: "Compare public key fingerprint against authorized key repository, identify writing process PID."
+false_positives: "Authorized DevOps key deployment workflows."

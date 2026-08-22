@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { RefreshCw, Play, Shield, Activity, Terminal } from 'lucide-react';
+import { RefreshCw, Play, Shield, Activity, Terminal, Zap, Radio, Network } from 'lucide-react';
 import { StatCards } from '../components/dashboard/StatCards';
 import { DashboardCharts } from '../components/dashboard/Charts';
 import { LiveAlertFeed } from '../components/dashboard/LiveAlertFeed';
 import { TopTargets } from '../components/dashboard/TopTargets';
+import { ThreatRadarVisualizer } from '../components/dashboard/ThreatRadarVisualizer';
+import { AttackGraphVisualizer } from '../components/dashboard/AttackGraphVisualizer';
 import { alertsApi } from '../api/alerts';
 import { eventsApi } from '../api/events';
 import { Alert, SOCMetrics } from '../types';
+import { cyberAudio } from '../utils/cyberAudio';
 
 interface Props {
   onOpenSimulator: () => void;
@@ -25,7 +28,7 @@ export const Dashboard: React.FC<Props> = ({ onOpenSimulator }) => {
     try {
       const [m, a] = await Promise.all([
         eventsApi.getMetrics(),
-        alertsApi.getAlerts({ limit: 10 }),
+        alertsApi.getAlerts({ limit: 12 }),
       ]);
       setMetrics(m);
       setAlerts(a.items);
@@ -45,12 +48,12 @@ export const Dashboard: React.FC<Props> = ({ onOpenSimulator }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header with Title & Action Controls */}
+      {/* Header with Title & Tactical Action Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold font-mono text-slate-100 tracking-wide flex items-center gap-2">
-            <Activity className="w-5 h-5 text-cyan-400" />
-            SECURITY OPERATIONS COMMAND CENTER
+            <Activity className="w-5 h-5 text-cyan-400 animate-pulse" />
+            CYBER DEFENSE OPERATIONS COMMAND CENTER
           </h1>
           <p className="text-xs text-slate-400 font-mono mt-0.5">
             Real-time telemetry ingestion, deterministic threat detection, and AI co-pilot status.
@@ -59,20 +62,26 @@ export const Dashboard: React.FC<Props> = ({ onOpenSimulator }) => {
 
         <div className="flex items-center gap-2.5">
           <button
-            onClick={() => fetchData(true)}
+            onClick={() => {
+              cyberAudio.playScan();
+              fetchData(true);
+            }}
             disabled={refreshing}
-            className="p-2 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg text-slate-400 hover:text-slate-200 transition-colors"
+            className="p-2.5 bg-slate-900 border border-slate-800 hover:border-cyan-500/50 rounded-xl text-slate-400 hover:text-cyan-300 transition-colors shadow-inner"
             title="Refresh Telemetry"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-cyan-400' : ''}`} />
           </button>
 
           <button
-            onClick={onOpenSimulator}
-            className="px-3.5 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-glow-red"
+            onClick={() => {
+              cyberAudio.playAlarm();
+              onOpenSimulator();
+            }}
+            className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white rounded-xl text-xs font-mono font-bold flex items-center gap-2 transition-all shadow-glow-red"
           >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            Live Attack Simulator
+            <Play className="w-3.5 h-3.5 fill-current animate-pulse" />
+            Attack Simulator Lab
           </button>
         </div>
       </div>
@@ -80,7 +89,17 @@ export const Dashboard: React.FC<Props> = ({ onOpenSimulator }) => {
       {/* Metric Stat Cards */}
       <StatCards metrics={metrics} loading={loading} />
 
-      {/* Main Visual Charts */}
+      {/* Futuristic Visual Row: Tactical Threat Radar + Interactive Attack Topology Graph */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-4">
+          <ThreatRadarVisualizer alerts={alerts} />
+        </div>
+        <div className="lg:col-span-8">
+          <AttackGraphVisualizer alerts={alerts} />
+        </div>
+      </div>
+
+      {/* Telemetry Charts */}
       <DashboardCharts metrics={metrics} />
 
       {/* Live Alerts & Top Targets */}

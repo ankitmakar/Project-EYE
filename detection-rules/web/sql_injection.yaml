@@ -1,0 +1,12 @@
+rule_id: "WEB-001"
+name: "Web SQL Injection (SQLi) Attempt"
+description: "Detects SQL injection signatures (UNION SELECT, boolean-based SQL syntax, SLEEP/BENCHMARK calls) in HTTP query parameters or request URIs."
+severity: "high"
+confidence: 0.92
+mitre_tactic: "Initial Access"
+mitre_technique: "T1190 - Exploit Public-Facing Application"
+enabled: true
+condition:
+  event_type: "sql_injection_attempt"
+investigation_guidance: "Examine HTTP response code (200 vs 403/500), determine if database error was returned, audit affected web endpoint."
+false_positives: "Security testing with sqlmap during scheduled authorized pentest windows."

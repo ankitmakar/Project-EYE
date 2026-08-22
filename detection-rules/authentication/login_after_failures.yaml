@@ -1,0 +1,12 @@
+rule_id: "AUTH-003"
+name: "Successful Login Following Repeated Failures"
+description: "Detects a successful authentication event from an IP address that previously generated multiple failed authentication events."
+severity: "critical"
+confidence: 0.95
+mitre_tactic: "Initial Access"
+mitre_technique: "T1078 - Valid Accounts"
+enabled: true
+condition:
+  event_type: "auth_success"
+investigation_guidance: "Immediate triage required. Verify whether legitimate user authorized this session or if credentials were breached via brute force."
+false_positives: "User forgot password and finally remembered after several incorrect attempts."

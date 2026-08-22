@@ -1,0 +1,12 @@
+rule_id: "EXEC-001"
+name: "Obfuscated / Encoded Command Execution"
+description: "Detects execution of base64 encoded PowerShell commands, obfuscated bash commands, or hex-encoded shell executions."
+severity: "high"
+confidence: 0.92
+mitre_tactic: "Defense Evasion"
+mitre_technique: "T1027 - Obfuscated/Encoded Files or Information"
+enabled: true
+condition:
+  event_type: "obfuscated_command"
+investigation_guidance: "Decode command payload, inspect parent process tree, identify network connections initiated by the process."
+false_positives: "Legitimate automated deployment scripts using encoded configuration blobs."

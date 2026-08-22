@@ -1,0 +1,12 @@
+rule_id: "EXEC-002"
+name: "Interactive Reverse Shell Spawn"
+description: "Detects spawn of interactive shell redirected across network sockets (/dev/tcp, nc, python pty, socat, powershell reverse tcp)."
+severity: "critical"
+confidence: 0.98
+mitre_tactic: "Execution"
+mitre_technique: "T1059.004 - Command and Scripting Interpreter: Unix Shell"
+enabled: true
+condition:
+  event_type: "suspicious_process"
+investigation_guidance: "Isolate endpoint immediately. Inspect established TCP sockets, check parent web server or service process, dump process memory."
+false_positives: "Authorized administrative remote maintenance shells on custom non-standard ports."

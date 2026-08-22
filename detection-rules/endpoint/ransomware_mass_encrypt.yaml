@@ -1,0 +1,12 @@
+rule_id: "FILE-001"
+name: "Ransomware Mass File Encryption Activity"
+description: "Detects rapid creation of known ransomware file extensions (.locked, .crypto, .enc, .ransom) or mass modification of file headers."
+severity: "critical"
+confidence: 0.95
+mitre_tactic: "Impact"
+mitre_technique: "T1486 - Data Encrypted for Impact"
+enabled: true
+condition:
+  event_type: "ransomware_file_event"
+investigation_guidance: "Emergency quarantine required! Disconnect network adapter immediately, kill suspicious child processes, check shadow copies status."
+false_positives: "Legitimate encryption tools (e.g. VeraCrypt, BitLocker batch operations)."

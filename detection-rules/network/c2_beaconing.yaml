@@ -1,0 +1,12 @@
+rule_id: "NET-002"
+name: "C2 Periodic Beaconing Heartbeat"
+description: "Detects outbound network connections to external destinations occurring at strictly regular intervals with low jitter."
+severity: "high"
+confidence: 0.88
+mitre_tactic: "Command and Control"
+mitre_technique: "T1071.001 - Web Protocols"
+enabled: true
+condition:
+  event_type: "c2_beaconing"
+investigation_guidance: "Analyze connection periodicity, check TLS certificate validity, inspect process initiating the outbound socket."
+false_positives: "NTP time synchronization, telemetry heartbeats from legitimate cloud monitoring agents."

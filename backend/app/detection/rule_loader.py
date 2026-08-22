@@ -1,30 +1,30 @@
 import os
 import yaml
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from app.core.logging import logger
 
 class RuleDefinition:
     def __init__(self, raw_dict: Dict[str, Any], file_path: str = ""):
-        self.rule_id: str = raw_dict.get("id", "UNKNOWN-RULE")
+        self.rule_id: str = raw_dict.get("id") or raw_dict.get("rule_id", "UNKNOWN-RULE")
         self.name: str = raw_dict.get("name", "Unnamed Rule")
         self.version: str = str(raw_dict.get("version", "1.0"))
         self.description: str = raw_dict.get("description", "")
-        self.severity: str = raw_dict.get("severity", "medium").lower()
+        self.severity: str = str(raw_dict.get("severity", "medium")).lower()
         self.confidence: float = float(raw_dict.get("confidence", 0.85))
         self.enabled: bool = bool(raw_dict.get("enabled", True))
         
         metadata = raw_dict.get("metadata", {})
-        self.category: str = metadata.get("category", "general")
+        self.category: str = metadata.get("category", raw_dict.get("category", "general"))
         mitre = metadata.get("mitre_attack", {})
-        self.mitre_tactic: str = mitre.get("tactic", "")
-        self.mitre_technique: str = mitre.get("technique", "")
-        self.false_positives: List[str] = metadata.get("false_positives", [])
+        self.mitre_tactic: str = mitre.get("tactic", raw_dict.get("mitre_tactic", ""))
+        self.mitre_technique: str = mitre.get("technique", raw_dict.get("mitre_technique", ""))
+        self.false_positives: List[str] = metadata.get("false_positives", [raw_dict.get("false_positives")] if isinstance(raw_dict.get("false_positives"), str) else raw_dict.get("false_positives", []))
         
-        self.detection: Dict[str, Any] = raw_dict.get("detection", {})
-        self.condition: Dict[str, Any] = self.detection.get("condition", {})
-        self.threshold: Dict[str, Any] = self.detection.get("threshold", {})
-        self.response_recommendations: List[str] = raw_dict.get("response_recommendations", [])
+        detection = raw_dict.get("detection", {})
+        self.condition: Dict[str, Any] = detection.get("condition", raw_dict.get("condition", {}))
+        self.threshold: Dict[str, Any] = detection.get("threshold", raw_dict.get("threshold", {}))
+        self.response_recommendations: List[str] = raw_dict.get("response_recommendations", [raw_dict.get("investigation_guidance")] if isinstance(raw_dict.get("investigation_guidance"), str) else raw_dict.get("investigation_guidance", []))
         
         self.yaml_content: str = yaml.dump(raw_dict)
         self.file_path: str = file_path
@@ -44,7 +44,7 @@ class RuleLoader:
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
                     data = yaml.safe_load(f)
-                    if isinstance(data, dict) and "id" in data:
+                    if isinstance(data, dict) and ("id" in data or "rule_id" in data):
                         rule = RuleDefinition(data, str(file_path))
                         cls._rules[rule.rule_id] = rule
                         loaded_rules.append(rule)
@@ -55,7 +55,7 @@ class RuleLoader:
         return loaded_rules
 
     @classmethod
-    def get_rule(cls, rule_id: str) -> RuleDefinition | None:
+    def get_rule(cls, rule_id: str) -> Optional[RuleDefinition]:
         return cls._rules.get(rule_id)
 
     @classmethod
@@ -65,6 +65,6 @@ class RuleLoader:
     @classmethod
     def parse_rule_yaml(cls, yaml_content: str) -> RuleDefinition:
         data = yaml.safe_load(yaml_content)
-        if not isinstance(data, dict) or "id" not in data:
-            raise ValueError("Invalid detection rule YAML. 'id' is required.")
+        if not isinstance(data, dict) or ("id" not in data and "rule_id" not in data):
+            raise ValueError("Invalid detection rule YAML. 'id' or 'rule_id' is required.")
         return RuleDefinition(data)

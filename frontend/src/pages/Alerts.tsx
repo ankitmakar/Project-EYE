@@ -18,6 +18,7 @@ import { SeverityBadge } from '../components/common/SeverityBadge';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Modal } from '../components/common/Modal';
 import { Alert } from '../types';
+import { cyberAudio } from '../utils/cyberAudio';
 
 export const Alerts: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -69,6 +70,7 @@ export const Alerts: React.FC = () => {
   }, [statusFilter, severityFilter]);
 
   const handleSelectAlert = (alert: Alert) => {
+    cyberAudio.playClick();
     setSelectedAlert(alert);
     setAnalystNote(alert.analyst_notes || '');
     setSearchParams({ id: alert.alert_id });
@@ -81,6 +83,7 @@ export const Alerts: React.FC = () => {
 
   const handleUpdateStatus = async (newStatus: string) => {
     if (!selectedAlert) return;
+    cyberAudio.playClick();
     try {
       const updated = await alertsApi.updateAlert(selectedAlert.id, { status: newStatus });
       setSelectedAlert(updated);
@@ -93,6 +96,7 @@ export const Alerts: React.FC = () => {
   const handleSaveNote = async () => {
     if (!selectedAlert) return;
     setSavingNote(true);
+    cyberAudio.playClick();
     try {
       const updated = await alertsApi.updateAlert(selectedAlert.id, { analyst_notes: analystNote });
       setSelectedAlert(updated);
@@ -106,6 +110,7 @@ export const Alerts: React.FC = () => {
 
   const handleEscalate = async () => {
     if (!selectedAlert) return;
+    cyberAudio.playAlarm();
     try {
       const inc = await alertsApi.escalateAlert(selectedAlert.id, {
         title: `Incident: ${selectedAlert.rule_name} on ${selectedAlert.host}`,
@@ -135,34 +140,37 @@ export const Alerts: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold font-mono text-slate-100 tracking-wide flex items-center gap-2">
-            <BellRing className="w-5 h-5 text-orange-400" />
+            <BellRing className="w-5 h-5 text-eye-warning animate-pulse" />
             SECURITY ALERTS QUEUE
           </h1>
-          <p className="text-xs text-slate-400 font-mono mt-0.5">
+          <p className="text-xs text-eye-muted font-mono mt-0.5">
             Deterministic detection rule triggers requiring analyst triage and investigation.
           </p>
         </div>
 
         <button
-          onClick={fetchAlerts}
-          className="p-2 bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg text-slate-400 hover:text-slate-200 transition-colors self-start sm:self-auto"
+          onClick={() => {
+            cyberAudio.playScan();
+            fetchAlerts();
+          }}
+          className="p-2.5 bg-black/40 border border-white/10 hover:border-eye-primary/50 rounded-xl text-eye-muted hover:text-eye-primary transition-colors shadow-inner"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-eye-primary' : ''}`} />
         </button>
       </div>
 
       {/* Filter Bar */}
-      <div className="p-4 rounded-xl border border-slate-800 bg-[#0f172a]/70 backdrop-blur-md flex flex-wrap items-center justify-between gap-4">
+      <div className="liquid-glass-card p-4 border-white/10 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-eye-muted absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search alert ID, rule, host, IP, user..."
-              className="w-full bg-slate-900/80 border border-slate-700/80 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-cyan-400"
+              className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-eye-primary"
             />
           </div>
 
@@ -170,7 +178,7 @@ export const Alerts: React.FC = () => {
           <select
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-cyan-400"
+            className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-eye-primary"
           >
             <option value="">All Severities</option>
             <option value="critical">Critical</option>
@@ -183,7 +191,7 @@ export const Alerts: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-cyan-400"
+            className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-eye-primary"
           >
             <option value="">All Statuses</option>
             <option value="new">New</option>
@@ -194,17 +202,17 @@ export const Alerts: React.FC = () => {
           </select>
         </div>
 
-        <div className="text-xs font-mono text-slate-400">
+        <div className="text-xs font-mono text-eye-muted">
           Showing <span className="text-slate-100 font-bold">{filteredAlerts.length}</span> of {total} alerts
         </div>
       </div>
 
       {/* Alerts Table */}
-      <div className="rounded-xl border border-slate-800 bg-[#0f172a]/70 backdrop-blur-md overflow-hidden">
+      <div className="liquid-glass-card border-white/10 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left font-mono text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-900/80 border-b border-slate-800 text-slate-400 uppercase tracking-wider">
+              <tr className="bg-black/40 border-b border-white/10 text-eye-muted uppercase tracking-wider text-[10px]">
                 <th className="py-3 px-4">Severity</th>
                 <th className="py-3 px-4">Alert ID</th>
                 <th className="py-3 px-4">Detection Rule</th>
@@ -215,16 +223,16 @@ export const Alerts: React.FC = () => {
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-white/5">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400">
+                  <td colSpan={8} className="py-8 text-center text-eye-muted">
                     Loading security alerts...
                   </td>
                 </tr>
               ) : filteredAlerts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400">
+                  <td colSpan={8} className="py-8 text-center text-eye-muted">
                     No alerts found matching filter criteria.
                   </td>
                 </tr>
@@ -233,21 +241,21 @@ export const Alerts: React.FC = () => {
                   <tr
                     key={alert.id}
                     onClick={() => handleSelectAlert(alert)}
-                    className="hover:bg-slate-800/40 transition-colors cursor-pointer"
+                    className="hover:bg-white/5 transition-colors cursor-pointer"
                   >
                     <td className="py-3 px-4">
                       <SeverityBadge severity={alert.severity} size="sm" />
                     </td>
-                    <td className="py-3 px-4 font-bold text-cyan-400">{alert.alert_id}</td>
+                    <td className="py-3 px-4 font-bold text-eye-primary">{alert.alert_id}</td>
                     <td className="py-3 px-4 text-slate-200 font-semibold max-w-xs truncate">
                       {alert.rule_name}
                     </td>
                     <td className="py-3 px-4 text-slate-300">{alert.host}</td>
-                    <td className="py-3 px-4 text-slate-400">{alert.source_ip || '-'}</td>
+                    <td className="py-3 px-4 text-eye-muted">{alert.source_ip || '-'}</td>
                     <td className="py-3 px-4">
                       <StatusBadge status={alert.status} />
                     </td>
-                    <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
+                    <td className="py-3 px-4 text-eye-muted whitespace-nowrap">
                       {new Date(alert.timestamp).toLocaleString()}
                     </td>
                     <td className="py-3 px-4 text-right">
@@ -256,7 +264,7 @@ export const Alerts: React.FC = () => {
                           e.stopPropagation();
                           handleSelectAlert(alert);
                         }}
-                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 text-[11px]"
+                        className="px-2.5 py-1 bg-black/40 hover:bg-white/10 text-slate-200 rounded-lg border border-white/10 text-[11px]"
                       >
                         Inspect
                       </button>
@@ -279,7 +287,7 @@ export const Alerts: React.FC = () => {
         >
           <div className="space-y-5">
             {/* Header info */}
-            <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-lg bg-slate-900/80 border border-slate-800">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-black/50 border border-white/10">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <SeverityBadge severity={selectedAlert.severity} />
@@ -288,8 +296,8 @@ export const Alerts: React.FC = () => {
                 <h2 className="text-base font-bold text-slate-100 font-mono">
                   {selectedAlert.rule_name}
                 </h2>
-                <div className="text-xs text-slate-400 font-mono mt-1">
-                  Host: <strong className="text-slate-200">{selectedAlert.host}</strong> | Source: <strong className="text-slate-200">{selectedAlert.source}</strong> | Confidence: <strong className="text-cyan-400">{(selectedAlert.confidence * 100).toFixed(0)}%</strong>
+                <div className="text-xs text-eye-muted font-mono mt-1">
+                  Host: <strong className="text-slate-200">{selectedAlert.host}</strong> | Source: <strong className="text-slate-200">{selectedAlert.source}</strong> | Confidence: <strong className="text-eye-primary">{(selectedAlert.confidence * 100).toFixed(0)}%</strong>
                 </div>
               </div>
 
@@ -297,14 +305,14 @@ export const Alerts: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => navigate(`/investigation?alert_id=${selectedAlert.alert_id}`)}
-                  className="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 rounded text-xs font-mono font-semibold flex items-center gap-1.5 shadow-glow-blue"
+                  className="px-3 py-1.5 bg-eye-primary-soft hover:bg-eye-primary/30 text-eye-primary border border-eye-primary/40 rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 shadow-glow-primary"
                 >
                   <Bot className="w-4 h-4" />
                   AI Co-Pilot
                 </button>
                 <button
                   onClick={handleEscalate}
-                  className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 rounded text-xs font-mono font-semibold flex items-center gap-1.5 shadow-glow-red"
+                  className="px-3 py-1.5 bg-eye-danger-soft hover:bg-eye-danger/30 text-eye-danger border border-eye-danger/40 rounded-xl text-xs font-mono font-semibold flex items-center gap-1.5 shadow-glow-danger"
                 >
                   <Flame className="w-4 h-4" />
                   Escalate
@@ -314,7 +322,7 @@ export const Alerts: React.FC = () => {
 
             {/* Status Selector */}
             <div>
-              <label className="block text-xs font-mono uppercase text-slate-400 mb-2">
+              <label className="block text-xs font-mono uppercase text-eye-muted mb-2 font-bold">
                 Update Triage Status
               </label>
               <div className="flex flex-wrap gap-2">
@@ -322,10 +330,10 @@ export const Alerts: React.FC = () => {
                   <button
                     key={st}
                     onClick={() => handleUpdateStatus(st)}
-                    className={`px-3 py-1 rounded text-xs font-mono uppercase border transition-all ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-mono uppercase border transition-all ${
                       selectedAlert.status === st
-                        ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-glow-blue'
-                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
+                        ? 'bg-eye-primary-soft border-eye-primary text-eye-primary shadow-glow-primary font-bold'
+                        : 'bg-black/30 border-white/10 text-eye-muted hover:bg-white/5'
                     }`}
                   >
                     {st}
@@ -336,17 +344,17 @@ export const Alerts: React.FC = () => {
 
             {/* Raw Evidence Payload Viewer */}
             <div>
-              <label className="block text-xs font-mono uppercase text-slate-400 mb-2">
+              <label className="block text-xs font-mono uppercase text-eye-muted mb-2 font-bold">
                 Evidence Payload (Forensic Metadata)
               </label>
-              <div className="p-3 bg-black/90 rounded-lg border border-slate-800 font-mono text-xs text-emerald-400 overflow-x-auto max-h-56">
+              <div className="p-3 bg-black/80 rounded-xl border border-white/10 font-mono text-xs text-eye-success overflow-x-auto max-h-56">
                 <pre>{JSON.stringify(selectedAlert.evidence, null, 2)}</pre>
               </div>
             </div>
 
             {/* Analyst Notes Editor */}
             <div>
-              <label className="block text-xs font-mono uppercase text-slate-400 mb-2">
+              <label className="block text-xs font-mono uppercase text-eye-muted mb-2 font-bold">
                 Analyst Investigation Notes
               </label>
               <textarea
@@ -354,12 +362,12 @@ export const Alerts: React.FC = () => {
                 onChange={(e) => setAnalystNote(e.target.value)}
                 rows={3}
                 placeholder="Add investigation findings, root cause notes, or action rationale..."
-                className="w-full p-3 bg-slate-900 border border-slate-700 rounded-lg text-xs font-mono text-slate-100 focus:outline-none focus:border-cyan-400"
+                className="w-full p-3 bg-black/40 border border-white/10 rounded-xl text-xs font-mono text-slate-100 focus:outline-none focus:border-eye-primary"
               />
               <button
                 onClick={handleSaveNote}
                 disabled={savingNote}
-                className="mt-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded text-xs font-mono transition-colors"
+                className="mt-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10 rounded-xl text-xs font-mono transition-colors"
               >
                 {savingNote ? 'Saving...' : 'Save Notes'}
               </button>
